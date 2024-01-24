@@ -86,8 +86,10 @@ int show_menu(SDL_Renderer *renderer)
                 {
                     if (button_hover(buttons[i], ev.motion.x, ev.motion.y))
                     {
-                        if (selected_click == i)
+                        if (selected_click == i) {
+                            SDL_DestroyTexture(bg_image);
                             return i;
+                        }
                     }
                 }
                 selected_click = -1;
