@@ -11,3 +11,10 @@ int min(int a, int b)
         return b;
     return a;
 }
+
+int abs(int x)
+{
+    if (x < 0)
+        return -x;
+    return x;
+}

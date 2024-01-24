@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 #include "../defines.h"
 #include "../utils/window.h"
 #include "../utils/utils.h"
@@ -19,10 +21,12 @@ int button_hover(button bt, int x, int y);
 int show_menu(SDL_Renderer *renderer)
 {
     const button buttons[4] = {
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT / 2 + 80, 190, 60, "Play!"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT / 2 + 150, 190, 60, "Level"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT / 2 + 220, 190, 60, "Records"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT / 2 + 290, 190, 60, "Exit"}};
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 320, 190, 60, "Play!"},
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 250, 190, 60, "Level"},
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 180, 190, 60, "Records"},
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 110, 190, 60, "Exit"}};
+    
+    const int COSMIC_GLARE_COUNT = 5;
 
     const SDL_Color button_bg_default_color = {0x02, 0x3b, 0x59, 255};
     const SDL_Color button_bg_selected_color = {0x75, 0x50, 0x7b, 255};
@@ -36,6 +40,19 @@ int show_menu(SDL_Renderer *renderer)
     {
         return 3;
     }
+
+    srand(time(NULL));
+
+    SDL_Texture *cosmic_glare_texture = load_image("assets/cosmic_glare.bmp", renderer);
+    int glare_x[COSMIC_GLARE_COUNT], glare_y[COSMIC_GLARE_COUNT], glare_alpha[COSMIC_GLARE_COUNT];
+    for (int i = 0; i < COSMIC_GLARE_COUNT; i++) {
+        glare_alpha[i] = rand() % 500;
+        glare_x[i] = rand() % WINDOW_WIDTH;
+        glare_y[i] = rand() % WINDOW_HEIGHT;
+    }
+    SDL_SetTextureBlendMode(cosmic_glare_texture, SDL_BLENDMODE_BLEND);
+    int cosmic_glare_width, cosmic_glare_height;
+    SDL_QueryTexture(cosmic_glare_texture, NULL, NULL, &cosmic_glare_width, &cosmic_glare_height);
 
     int last_frame = SDL_GetTicks();
 
@@ -55,6 +72,7 @@ int show_menu(SDL_Renderer *renderer)
         {
             if (ev.type == SDL_QUIT)
             {
+                SDL_DestroyTexture(cosmic_glare_texture);
                 SDL_DestroyTexture(bg_image);
                 return 3;
             }
@@ -88,6 +106,7 @@ int show_menu(SDL_Renderer *renderer)
                     {
                         if (selected_click == i)
                         {
+                            SDL_DestroyTexture(cosmic_glare_texture);
                             SDL_DestroyTexture(bg_image);
                             return i;
                         }
@@ -100,6 +119,19 @@ int show_menu(SDL_Renderer *renderer)
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, bg_image, NULL, NULL);
+
+        
+        for (int i = 0; i < COSMIC_GLARE_COUNT; i++) {
+            glare_alpha[i] += time_delta / 10;
+            if (255 - abs(255 - glare_alpha[i]) < 0) {
+                glare_alpha[i] = rand() % 50;
+                glare_x[i] = rand() % WINDOW_WIDTH;
+                glare_y[i] = rand() % WINDOW_HEIGHT;
+            }
+            SDL_SetTextureAlphaMod(cosmic_glare_texture, 255 - abs(255 - glare_alpha[i]));
+            SDL_Rect glare_dest = {glare_x[i] * WINDOW_SCALE, glare_y[i] * WINDOW_SCALE, cosmic_glare_width * WINDOW_SCALE, cosmic_glare_height * WINDOW_SCALE};
+            SDL_RenderCopy(renderer, cosmic_glare_texture, NULL, &glare_dest);
+        }
 
         for (int i = 0; i < ARRAY_SIZE(buttons); i++)
         {
