@@ -17,8 +17,6 @@ int show_menu(SDL_Renderer *renderer)
     
     const int COSMIC_GLARE_COUNT = 5;
 
-    
-
     const SDL_Color button_bg_default_color = {0x02, 0x3b, 0x59, 255};
     const SDL_Color button_bg_selected_color = {0x75, 0x50, 0x7b, 255};
     const SDL_Color button_white = {255, 255, 255, 255};
@@ -65,6 +63,8 @@ int show_menu(SDL_Renderer *renderer)
             {
                 SDL_DestroyTexture(cosmic_glare_texture);
                 SDL_DestroyTexture(bg_image);
+                TTF_CloseFont(button_font);
+                TTF_CloseFont(bottom_text_font);
                 return 3;
             }
             else if (ev.type == SDL_MOUSEMOTION)
@@ -99,6 +99,8 @@ int show_menu(SDL_Renderer *renderer)
                         {
                             SDL_DestroyTexture(cosmic_glare_texture);
                             SDL_DestroyTexture(bg_image);
+                            TTF_CloseFont(button_font);
+                            TTF_CloseFont(bottom_text_font);
                             return i;
                         }
                     }

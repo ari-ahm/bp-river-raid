@@ -66,6 +66,8 @@ int show_level_selector(SDL_Renderer *renderer)
             {
                 SDL_DestroyTexture(cosmic_glare_texture);
                 SDL_DestroyTexture(bg_image);
+                TTF_CloseFont(button_font);
+                TTF_CloseFont(bottom_text_font);
                 return -2;
             }
             else if (ev.type == SDL_MOUSEMOTION)
@@ -100,6 +102,8 @@ int show_level_selector(SDL_Renderer *renderer)
                         {
                             SDL_DestroyTexture(cosmic_glare_texture);
                             SDL_DestroyTexture(bg_image);
+                            TTF_CloseFont(button_font);
+                            TTF_CloseFont(bottom_text_font);
                             if (i == 3) return -1;
                             return i;
                         }
