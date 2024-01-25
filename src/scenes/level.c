@@ -7,13 +7,14 @@
 #include "../utils/window.h"
 #include "../utils/utils.h"
 
-int show_menu(SDL_Renderer *renderer)
+
+int show_level_selector(SDL_Renderer *renderer)
 {
     const button buttons[4] = {
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 320, 190, 60, "Play!"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 250, 190, 60, "Level"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 180, 190, 60, "Records"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 110, 190, 60, "Exit"}};
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 320, 190, 60, "Easy"},
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 250, 190, 60, "Medium"},
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 180, 190, 60, "Hard"},
+        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 110, 190, 60, "Back"}};
     
     const int COSMIC_GLARE_COUNT = 5;
 
@@ -29,7 +30,7 @@ int show_menu(SDL_Renderer *renderer)
     SDL_Texture *bg_image = load_image("assets/menu_pixelated.jpg", renderer);
     if (bg_image == NULL)
     {
-        return 3;
+        return -2;
     }
 
     srand(time(NULL));
@@ -65,7 +66,7 @@ int show_menu(SDL_Renderer *renderer)
             {
                 SDL_DestroyTexture(cosmic_glare_texture);
                 SDL_DestroyTexture(bg_image);
-                return 3;
+                return -2;
             }
             else if (ev.type == SDL_MOUSEMOTION)
             {
@@ -99,6 +100,7 @@ int show_menu(SDL_Renderer *renderer)
                         {
                             SDL_DestroyTexture(cosmic_glare_texture);
                             SDL_DestroyTexture(bg_image);
+                            if (i == 3) return -1;
                             return i;
                         }
                     }
