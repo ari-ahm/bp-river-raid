@@ -1,5 +1,5 @@
 TARGET = prog
-LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf
+LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 CXX = gcc
 CFLAGS = -g -std=c11 -O2 -Wall -Wextra
 

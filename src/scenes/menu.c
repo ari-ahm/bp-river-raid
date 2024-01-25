@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -27,6 +28,20 @@ int show_menu(SDL_Renderer *renderer)
         {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 110, 190, 60, "Exit"}};
     
     const int COSMIC_GLARE_COUNT = 5;
+
+    Mix_Music *music = NULL;    
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+        fprintf(stderr, "[ERR] couldn't initialize Mix_OpenAudio\n%s\n", Mix_GetError());
+    else {
+        music = Mix_LoadMUS("assets/intro.mp3");
+        if (music == NULL) {
+            fprintf(stderr, "[ERR] couldn't load music\n%s\n", Mix_GetError());
+        }
+        else
+        {
+            Mix_PlayMusic(music, -1);
+        }
+    }
 
     const SDL_Color button_bg_default_color = {0x02, 0x3b, 0x59, 255};
     const SDL_Color button_bg_selected_color = {0x75, 0x50, 0x7b, 255};
@@ -74,6 +89,7 @@ int show_menu(SDL_Renderer *renderer)
             {
                 SDL_DestroyTexture(cosmic_glare_texture);
                 SDL_DestroyTexture(bg_image);
+                Mix_FreeMusic(music);
                 return 3;
             }
             else if (ev.type == SDL_MOUSEMOTION)
@@ -108,6 +124,7 @@ int show_menu(SDL_Renderer *renderer)
                         {
                             SDL_DestroyTexture(cosmic_glare_texture);
                             SDL_DestroyTexture(bg_image);
+                            Mix_FreeMusic(music);
                             return i;
                         }
                     }
