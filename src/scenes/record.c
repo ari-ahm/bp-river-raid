@@ -4,16 +4,26 @@
 #include "../defines.h"
 #include "../utils/window.h"
 #include "../utils/utils.h"
+#include "../utils/recordHandler.h"
 
-int show_menu(SDL_Renderer *renderer)
+int show_records(SDL_Renderer *renderer)
 {
-    const button buttons[4] = {
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 320, 190, 60, "Play!"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 250, 190, 60, "Level"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 180, 190, 60, "Records"},
-        {WINDOW_WIDTH - 200, WINDOW_HEIGHT - 110, 190, 60, "Exit"}};
-    
-    const int COSMIC_GLARE_COUNT = 5, COSMIC_GLARE_STEPS = 64;
+    const int BUTTON_COUNT = 7, BUTTON_HEIGHT = 60, BUTTON_WIDTH = 190, BUTTON_DIST = 5;
+    button buttons[BUTTON_COUNT + 1];
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        buttons[i].x = (WINDOW_WIDTH - BUTTON_WIDTH) / 2;
+        buttons[i].y = (WINDOW_HEIGHT - BUTTON_COUNT * (BUTTON_HEIGHT + BUTTON_DIST) + BUTTON_DIST) / 2 + i * (BUTTON_HEIGHT + BUTTON_DIST);
+        buttons[i].w = BUTTON_WIDTH;
+        buttons[i].h = BUTTON_HEIGHT;
+    }
+    buttons[BUTTON_COUNT].x = (WINDOW_WIDTH - BUTTON_WIDTH) / 2;
+    buttons[BUTTON_COUNT].y = (WINDOW_HEIGHT + BUTTON_COUNT * (BUTTON_HEIGHT + BUTTON_DIST) + 40) / 2;
+    buttons[BUTTON_COUNT].w = BUTTON_WIDTH;
+    buttons[BUTTON_COUNT].h = BUTTON_HEIGHT;
+    buttons[BUTTON_COUNT].text = "Back";
+
+
+    const int COSMIC_GLARE_COUNT = 5;
 
     const SDL_Color button_bg_default_color = {0x02, 0x3b, 0x59, 255};
     const SDL_Color button_bg_selected_color = {0x75, 0x50, 0x7b, 255};
@@ -25,8 +35,13 @@ int show_menu(SDL_Renderer *renderer)
     SDL_Texture *bg_image = load_image("assets/menu_pixelated.jpg", renderer);
     if (bg_image == NULL)
     {
-        return 3;
+        return -1;
     }
+
+    record *records = loadRecords();
+
+    for (int i = 0; i < BUTTON_COUNT; i++)
+        buttons[i].text = records[i].time;
 
     SDL_Texture *cosmic_glare_texture = load_image("assets/cosmic_glare.bmp", renderer);
     int glare_x[COSMIC_GLARE_COUNT], glare_y[COSMIC_GLARE_COUNT], glare_alpha[COSMIC_GLARE_COUNT];
@@ -61,7 +76,8 @@ int show_menu(SDL_Renderer *renderer)
                 SDL_DestroyTexture(bg_image);
                 TTF_CloseFont(button_font);
                 TTF_CloseFont(bottom_text_font);
-                return 3;
+                freeRecords(records);
+                return -1;
             }
             else if (ev.type == SDL_MOUSEMOTION)
             {
@@ -97,6 +113,7 @@ int show_menu(SDL_Renderer *renderer)
                             SDL_DestroyTexture(bg_image);
                             TTF_CloseFont(button_font);
                             TTF_CloseFont(bottom_text_font);
+                            freeRecords(records);
                             return i;
                         }
                     }
@@ -117,7 +134,7 @@ int show_menu(SDL_Renderer *renderer)
                 glare_x[i] = rand() % WINDOW_WIDTH;
                 glare_y[i] = rand() % WINDOW_HEIGHT;
             }
-            SDL_SetTextureAlphaMod(cosmic_glare_texture, min((((255 - abs(255 - glare_alpha[i])) + COSMIC_GLARE_STEPS - 1) / COSMIC_GLARE_STEPS) * COSMIC_GLARE_STEPS, 255));
+            SDL_SetTextureAlphaMod(cosmic_glare_texture, 255 - abs(255 - glare_alpha[i]));
             SDL_Rect glare_dest = {glare_x[i] * WINDOW_SCALE, glare_y[i] * WINDOW_SCALE, cosmic_glare_width * WINDOW_SCALE, cosmic_glare_height * WINDOW_SCALE};
             SDL_RenderCopy(renderer, cosmic_glare_texture, NULL, &glare_dest);
         }

@@ -6,6 +6,8 @@
 #define WINDOW_SCALE 2
 #define WINDOW_TITLE "River Raid"
 
+#define GAME_SAVE ".riverraiddata"
+
 #define FPS 30
 #define FRAME_TIME 1000 / FPS
 
@@ -14,6 +16,5 @@
 #define ARRAY_SIZE(a) (int)(sizeof(a) / sizeof(a[0]))
 
 #define BUTTON_RIM_WIDTH 5
-
 
 #endif

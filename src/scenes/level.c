@@ -1,8 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include "../defines.h"
 #include "../utils/window.h"
 #include "../utils/utils.h"
@@ -32,8 +30,6 @@ int show_level_selector(SDL_Renderer *renderer)
     {
         return -2;
     }
-
-    srand(time(NULL));
 
     SDL_Texture *cosmic_glare_texture = load_image("assets/cosmic_glare.bmp", renderer);
     int glare_x[COSMIC_GLARE_COUNT], glare_y[COSMIC_GLARE_COUNT], glare_alpha[COSMIC_GLARE_COUNT];

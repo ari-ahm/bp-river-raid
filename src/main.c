@@ -1,5 +1,8 @@
 #include "utils/window.h"
 #include "scenes/scenes.h"
+#include "game/base_game.h"
+#include <stdlib.h>
+#include <time.h>
 
 int main()
 {
@@ -8,6 +11,8 @@ int main()
     {
         return 0;
     }
+
+    srand(time(NULL));
 
     int lvl = 0;
     int is_looping = 1;
@@ -23,7 +28,7 @@ int main()
             // openOutputRecord();
             // time_t tm = time(NULL);
             // srand(tm);
-            // int score = run_game(keyboard_input, lvl);
+            int score = run_game(get_renderer(), lvl);
             // writeStats(lvl, tm, score, "bobby_marins");
             // closeIORecord();
             break;
@@ -36,15 +41,19 @@ int main()
             if (ret != -1)
                 lvl = ret;
             break;
-        // case 2:
-        //     int runRecord = show_records();
-        //     if (runRecord)
-        //     {
-        //         free_music();
-        //         run_game(record_input, runRecord - 1);
-        //         closeIORecord();
-        //     }
-        //     break;
+        case 2:
+            int runRecord = show_records(get_renderer());
+            if (runRecord == -1)
+            {
+                is_looping = 0;
+            }
+            else if (runRecord)
+            {
+                free_music();
+                // run_game(record_input, runRecord - 1);
+                // closeIORecord();
+            }
+            break;
         case 3:
             is_looping = 0;
         }
