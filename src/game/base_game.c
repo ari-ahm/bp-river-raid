@@ -1,10 +1,11 @@
 #include <SDL2/SDL.h>
 #include "../defines.h"
 #include "../utils/utils.h"
+#include "../utils/linkedList.h"
 #include "game_defines.h"
 #include "game_draw.h"
 
-void update(int time_delta, game_input_move gim, player *p);
+void update(int time_delta, game_input_move gim, player *p, list **entities);
 
 int run_game(SDL_Renderer *renderer, int lvl)
 {
@@ -14,7 +15,8 @@ int run_game(SDL_Renderer *renderer, int lvl)
         return 0;
     }
     game_input_move gim = {0, 0, 0, 0, 0};
-    player p = {0, 0, 0, 0}; // fix
+    player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0};
+    list *entities = NULL;
     while (1)
     {
         current_frame = SDL_GetTicks();
@@ -29,6 +31,8 @@ int run_game(SDL_Renderer *renderer, int lvl)
             if (ev.type == SDL_QUIT)
             {
                 destroy_textures();
+                while (entities)
+                    removeElement(&entities, 0);
                 return 0;
             }
             else if (ev.type == SDL_KEYDOWN)
@@ -51,8 +55,8 @@ int run_game(SDL_Renderer *renderer, int lvl)
             }
         }
 
-        update(time_delta, gim, &p);
+        update(time_delta, gim, &p, &entities);
 
-        draw(renderer, p);
+        draw(renderer, SDL_GetTicks(), gim, p, entities);
     }
 }

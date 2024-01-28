@@ -16,4 +16,13 @@ typedef struct {
     long double yspeed;
 } player;
 
+typedef struct {
+    int type;
+    int texture;
+    long double x;
+    long double y;
+    long double xspeed;
+    long double yspeed;
+} game_entity;
+
 #endif
