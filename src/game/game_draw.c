@@ -12,9 +12,12 @@ const char *GAME_TEXTURES_PATH[] = {
     "assets/asteroids/asteroid1.png",
     "assets/asteroids/asteroid2.png",
     "assets/asteroids/asteroid3.png",
-    "assets/asteroids/asteroid4.png"};
+    "assets/asteroids/asteroid4.png",
+    "assets/cargo_ship.png"};
 
 static SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH)];
+static TTF_Font *font;
+static int texture_dim[ARRAY_SIZE(GAME_TEXTURES_PATH)][2];
 
 int load_textures(SDL_Renderer *renderer)
 {
@@ -23,7 +26,9 @@ int load_textures(SDL_Renderer *renderer)
         textures[i] = load_image(GAME_TEXTURES_PATH[i], renderer);
         if (textures[i] == NULL)
             return 1;
+        SDL_QueryTexture(textures[i], NULL, NULL, &texture_dim[i][0], &texture_dim[i][1]);
     }
+    font = TTF_OpenFont("assets/Minecraft.ttf", 24);
     return 0;
 }
 
@@ -33,22 +38,17 @@ void destroy_textures()
     {
         SDL_DestroyTexture(textures[i]);
     }
+    TTF_CloseFont(font);
 }
 
 int get_texture_width(int ind)
 {
-    int w, h;
-    SDL_QueryTexture(textures[ind], NULL, NULL, &w, &h);
-
-    return w;
+    return texture_dim[ind][0];
 }
 
 int get_texture_height(int ind)
 {
-    int w, h;
-    SDL_QueryTexture(textures[ind], NULL, NULL, &w, &h);
-
-    return h;
+    return texture_dim[ind][1];
 }
 
 void __draw_anim(SDL_Renderer *renderer, SDL_Texture *txt, int x, int y, int frame, int frame_count)
@@ -78,18 +78,48 @@ void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list 
 
     for (list *i = entities; i; i = i->next)
     {
-        if (((game_entity *)i->val)->type == 1)
+        switch (((game_entity *)i->val)->type)
         {
-            __draw_anim(renderer, textures[3 + ((game_entity *)i->val)->texture], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
+            case 1:
+                __draw_anim(renderer, textures[3 + ((game_entity *)i->val)->texture], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
+                break;
+            case 2:
+                __draw_anim(renderer, textures[7], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
+                break;
         }
+
     }
 
-    if (gim.u)
-        __draw_anim(renderer, textures[2], (int)p.x, (int)p.y, (tiks / 200) % 4, 4);
+    if (p.invincible && (p.invincible / 500) % 2)
+    {
+        if (gim.u)
+        {
+            SDL_SetTextureAlphaMod(textures[2], 128);
+            __draw_anim(renderer, textures[2], (int)p.x, (int)p.y, (tiks / 200) % 4, 4);
+            SDL_SetTextureAlphaMod(textures[2], 255);
+        }
+        else
+        {
+            SDL_SetTextureAlphaMod(textures[1], 128);
+            __draw_anim(renderer, textures[1], (int)p.x, (int)p.y, (tiks / 200) % 3, 3);
+            SDL_SetTextureAlphaMod(textures[1], 255);
+        }
+        SDL_SetTextureAlphaMod(textures[0], 127);
+        __draw_anim(renderer, textures[0], (int)p.x, (int)p.y, 0, 1);
+        SDL_SetTextureAlphaMod(textures[0], 255);
+    }
     else
-        __draw_anim(renderer, textures[1], (int)p.x, (int)p.y, (tiks / 200) % 3, 3);
+    {
+        if (gim.u)
+            __draw_anim(renderer, textures[2], (int)p.x, (int)p.y, (tiks / 200) % 4, 4);
+        else
+            __draw_anim(renderer, textures[1], (int)p.x, (int)p.y, (tiks / 200) % 3, 3);
+        __draw_anim(renderer, textures[0], (int)p.x, (int)p.y, 0, 1);
+    }
 
-    __draw_anim(renderer, textures[0], (int)p.x, (int)p.y, 0, 1);
+    char health[20];
+    sprintf(health, "Health : %d", p.health);
+    render_text_by_center(renderer, font, 100, 40, health, (SDL_Color){255, 255, 255, 255});
 
     SDL_RenderPresent(renderer);
 }

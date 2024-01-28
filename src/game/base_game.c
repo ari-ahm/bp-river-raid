@@ -15,7 +15,7 @@ int run_game(SDL_Renderer *renderer, int lvl)
         return 0;
     }
     game_input_move gim = {0, 0, 0, 0, 0};
-    player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0};
+    player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0, get_texture_width(0), get_texture_height(0), 100, 0};
     list *entities = NULL;
     while (1)
     {

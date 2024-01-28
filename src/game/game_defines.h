@@ -14,6 +14,10 @@ typedef struct {
     long double y;
     long double xspeed;
     long double yspeed;
+    int w;
+    int h;
+    int health;
+    int invincible;
 } player;
 
 typedef struct {
@@ -21,8 +25,10 @@ typedef struct {
     int texture;
     long double x;
     long double y;
+    int w, h;
     long double xspeed;
     long double yspeed;
+    int damage;
 } game_entity;
 
 #endif
