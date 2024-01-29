@@ -7,7 +7,7 @@
 
 int load_textures(SDL_Renderer *renderer);
 void destroy_textures();
-void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list *entities, list *bullets);
+void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim, player p, list *entities, list *bullets);
 int get_texture_width(int ind);
 int get_texture_height(int ind);
 

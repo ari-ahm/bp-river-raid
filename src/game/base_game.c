@@ -60,6 +60,6 @@ int run_game(SDL_Renderer *renderer, int lvl)
 
         update(time_delta, gim, &p, &entities, &bullets);
 
-        draw(renderer, SDL_GetTicks(), gim, p, entities, bullets);
+        draw(renderer, SDL_GetTicks(), time_delta, gim, p, entities, bullets);
     }
 }

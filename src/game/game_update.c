@@ -13,26 +13,26 @@ const long double player_friction = 1;
 const int mine_spawn_probability = 150;
 const int cargo_spawn_probability = 100;
 
-void update_player_pos(int time_delta, game_input_move gim, player *p);
-void update_entities_pos(int time_delta, list **entities);
-void spawn_entities(int time_delta, list **entities);
-void check_player_collision(player *p, list **entities);
-void update_bullets(int time_delta, game_input_move gim, player *p, list **bullets);
-void update_bullets_pos(int time_delta, list **bullets);
-void check_bullet_collision(list **entities, list **bullets);
+void __update_player_pos(int time_delta, game_input_move gim, player *p);
+void __update_entities_pos(int time_delta, list **entities);
+void __spawn_entities(int time_delta, list **entities);
+void __check_player_collision(player *p, list **entities);
+void __update_bullets(int time_delta, game_input_move gim, player *p, list **bullets);
+void __update_bullets_pos(int time_delta, list **bullets);
+void __check_bullet_collision(list **entities, list **bullets);
 
 void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets)
 {
-    update_player_pos(time_delta, gim, p);
-    update_bullets(time_delta, gim, p, bullets);
-    update_bullets_pos(time_delta, bullets);
-    update_entities_pos(time_delta, entities);
-    spawn_entities(time_delta, entities);
-    check_bullet_collision(entities, bullets);
+    __update_player_pos(time_delta, gim, p);
+    __update_bullets(time_delta, gim, p, bullets);
+    __update_bullets_pos(time_delta, bullets);
+    __update_entities_pos(time_delta, entities);
+    __spawn_entities(time_delta, entities);
+    __check_bullet_collision(entities, bullets);
     if (p->invincible - time_delta <= 0)
     {
         p->invincible = 0;
-        check_player_collision(p, entities);
+        __check_player_collision(p, entities);
     }
     else
     {
@@ -40,7 +40,7 @@ void update(int time_delta, game_input_move gim, player *p, list **entities, lis
     }
 }
 
-void update_player_pos(int time_delta, game_input_move gim, player *p)
+void __update_player_pos(int time_delta, game_input_move gim, player *p)
 {
 
     long double xdrag = p->xspeed * p->xspeed * player_drag_coef + player_friction;
@@ -49,6 +49,9 @@ void update_player_pos(int time_delta, game_input_move gim, player *p)
     long double xacc = (gim.r * player_acceleration + gim.l * -player_acceleration + (p->xspeed > 0 ? -1 : 1) * xdrag);
     long double yacc = (gim.d * player_acceleration + gim.u * -player_acceleration + (p->yspeed > 0 ? -1 : 1) * ydrag);
 
+    if (p->x < 0 || p->x + p->w >= WINDOW_WIDTH) xacc += (p->x < 0 ? 1 : -1) * 300;
+    if (p->y < 0 || p->y + p->h >= WINDOW_HEIGHT) yacc += (p->y < 0 ? 1 : -1) * 300;
+
     p->xspeed += (xacc * time_delta / 1000);
     p->yspeed += (yacc * time_delta / 1000);
 
@@ -56,7 +59,7 @@ void update_player_pos(int time_delta, game_input_move gim, player *p)
     p->y += (p->yspeed * time_delta / 1000);
 }
 
-void update_entities_pos(int time_delta, list **entities)
+void __update_entities_pos(int time_delta, list **entities)
 {
     list *i = *entities;
     for (int j = 0; i; j++)
@@ -74,7 +77,7 @@ void update_entities_pos(int time_delta, list **entities)
     }
 }
 
-void spawn_entities(int time_delta, list **entities)
+void __spawn_entities(int time_delta, list **entities)
 {
     if (rand() % 1000000 < mine_spawn_probability * time_delta)
     {
@@ -86,8 +89,8 @@ void spawn_entities(int time_delta, list **entities)
         ((game_entity *)(*entities)->val)->yspeed = 20 + rand() % 10;
         ((game_entity *)(*entities)->val)->texture = rand() % 4;
         ((game_entity *)(*entities)->val)->damage = 5;
-        ((game_entity *)(*entities)->val)->health = 100;
-        ((game_entity *)(*entities)->val)->max_health = 100;
+        ((game_entity *)(*entities)->val)->health = 50;
+        ((game_entity *)(*entities)->val)->max_health = 50;
         ((game_entity *)(*entities)->val)->w = get_texture_width((((game_entity *)(*entities)->val)->texture % 4) + 3);
         ((game_entity *)(*entities)->val)->h = get_texture_height((((game_entity *)(*entities)->val)->texture % 4) + 3);
     }
@@ -101,14 +104,14 @@ void spawn_entities(int time_delta, list **entities)
         ((game_entity *)(*entities)->val)->yspeed = 40 + rand() % 20;
         ((game_entity *)(*entities)->val)->texture = 0;
         ((game_entity *)(*entities)->val)->damage = 10;
-        ((game_entity *)(*entities)->val)->health = 175;
-        ((game_entity *)(*entities)->val)->max_health = 175;
+        ((game_entity *)(*entities)->val)->health = 150;
+        ((game_entity *)(*entities)->val)->max_health = 150;
         ((game_entity *)(*entities)->val)->w = get_texture_width(7);
         ((game_entity *)(*entities)->val)->h = get_texture_height(7);
     }
 }
 
-void check_player_collision(player *p, list **entities)
+void __check_player_collision(player *p, list **entities)
 {
     for (list *i = *entities; i; i = i->next)
     {
@@ -121,7 +124,7 @@ void check_player_collision(player *p, list **entities)
     }
 }
 
-void update_bullets(int time_delta, game_input_move gim, player *p, list **bullets)
+void __update_bullets(int time_delta, game_input_move gim, player *p, list **bullets)
 {
     if (gim.shoot && p->shoot_cooldown - time_delta < 0)
     {
@@ -143,7 +146,7 @@ void update_bullets(int time_delta, game_input_move gim, player *p, list **bulle
     }
 }
 
-void update_bullets_pos(int time_delta, list **bullets)
+void __update_bullets_pos(int time_delta, list **bullets)
 {
     list *i = *bullets;
     for (int j = 0; i; j++)
@@ -159,7 +162,7 @@ void update_bullets_pos(int time_delta, list **bullets)
     }
 }
 
-void check_bullet_collision(list **entities, list **bullets)
+void __check_bullet_collision(list **entities, list **bullets)
 {
     list *i = *entities;
     for (int i_cnt = 0; i; i_cnt++)

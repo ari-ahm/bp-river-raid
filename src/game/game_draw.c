@@ -1,9 +1,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <math.h>
 #include "game_defines.h"
 #include "../defines.h"
 #include "../utils/window.h"
 #include "../utils/linkedList.h"
+#include "../utils/utils.h"
 
 const char *GAME_TEXTURES_PATH[] = {
     "assets/main_ship_bases/full_health.png",
@@ -18,8 +20,12 @@ const char *GAME_TEXTURES_PATH[] = {
     "assets/bullet.png"};
 
 static SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH)];
+static SDL_Texture *effects[1];
 static TTF_Font *font;
 static int texture_dim[ARRAY_SIZE(GAME_TEXTURES_PATH)][2];
+
+SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, int h, long double sigma, long double mul);
+list *background_stars;
 
 int load_textures(SDL_Renderer *renderer)
 {
@@ -30,7 +36,20 @@ int load_textures(SDL_Renderer *renderer)
             return 1;
         SDL_QueryTexture(textures[i], NULL, NULL, &texture_dim[i][0], &texture_dim[i][1]);
     }
+    effects[0] = __gaussian_blur(renderer, textures[9], 32, 32, 4, 2);
     font = TTF_OpenFont("assets/Minecraft.ttf", 24);
+
+    for (int i = 0; i < 20; i++)
+    {
+        addElement(&background_stars, sizeof(visual_effect), 0);
+        ((visual_effect *)background_stars->val)->type = rand() % 10000;
+        ((visual_effect *)background_stars->val)->x = rand() % WINDOW_WIDTH;
+        ((visual_effect *)background_stars->val)->y = rand() % WINDOW_HEIGHT;
+        ((visual_effect *)background_stars->val)->xspeed = 0;
+        ((visual_effect *)background_stars->val)->yspeed = 10;
+        ((visual_effect *)background_stars->val)->texture = rand() % 3;
+    }
+
     return 0;
 }
 
@@ -41,6 +60,8 @@ void destroy_textures()
         SDL_DestroyTexture(textures[i]);
     }
     TTF_CloseFont(font);
+    while (background_stars)
+        removeElement(&background_stars, 0);
 }
 
 int get_texture_width(int ind)
@@ -51,6 +72,71 @@ int get_texture_width(int ind)
 int get_texture_height(int ind)
 {
     return texture_dim[ind][1];
+}
+
+long double __gaussian_dist(long double sigma, long double x, long double y)
+{
+    long double pi = 3.141592653589793238462643383279502884197;
+    long double e = 2.7182818284590452353602874713526624977572;
+
+    return pow(e, -(x * x + y * y) / (2 * sigma * sigma)) / (2 * pi * sigma * sigma);
+}
+
+SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, int h, long double sigma, long double mul)
+{
+
+    SDL_Texture *ret = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    SDL_SetRenderTarget(renderer, ret);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    int txt_w, txt_h;
+    SDL_QueryTexture(txt, NULL, NULL, &txt_w, &txt_h);
+
+    SDL_Rect rct = {
+        (w - txt_w) / 2,
+        (h - txt_h) / 2,
+        txt_w,
+        txt_h};
+
+    SDL_RenderCopy(renderer, txt, NULL, &rct);
+    SDL_Color txt_px[w][h];
+    SDL_Surface *srf = SDL_CreateRGBSurface(0, w, h, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+    SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_RGBA8888, srf->pixels, srf->pitch);
+    for (int i = 0; i < w; i++)
+        for (int j = 0; j < h; j++)
+            SDL_GetRGBA(((Uint32 *)srf->pixels)[i + j * h], srf->format, &txt_px[i][j].r, &txt_px[i][j].g, &txt_px[i][j].b, &txt_px[i][j].a);
+    SDL_FreeSurface(srf);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    for (int i = 0; i < w; i++)
+    {
+        for (int j = 0; j < h; j++)
+        {
+            long double tmp_r = 0;
+            long double tmp_g = 0;
+            long double tmp_b = 0;
+            long double tmp_a = 0;
+            for (int i2 = 0; i2 < w; i2++)
+            {
+                for (int j2 = 0; j2 < h; j2++)
+                {
+                    long double coef = __gaussian_dist(sigma, i2 - i, j2 - j);
+                    tmp_r += txt_px[i2][j2].r * coef;
+                    tmp_g += txt_px[i2][j2].g * coef;
+                    tmp_b += txt_px[i2][j2].b * coef;
+                    tmp_a += txt_px[i2][j2].a * coef;
+                }
+            }
+            SDL_SetRenderDrawColor(renderer, min(255, tmp_r * mul), min(255, tmp_g * mul), min(255, tmp_b * mul), min(255, tmp_a * mul));
+            SDL_RenderDrawPoint(renderer, i, j);
+        }
+    }
+
+    SDL_SetRenderTarget(renderer, NULL);
+    return ret;
 }
 
 void __draw_anim(SDL_Renderer *renderer, SDL_Texture *txt, int x, int y, int frame, int frame_count)
@@ -80,21 +166,87 @@ void __draw_health(SDL_Renderer *renderer, int x, int y, int w, int h, long doub
         x * WINDOW_SCALE,
         y * WINDOW_SCALE,
         w * WINDOW_SCALE,
-        h * WINDOW_SCALE
-    };
+        h * WINDOW_SCALE};
     SDL_RenderFillRect(renderer, &rct);
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     rct.w = (int)(w * hl * WINDOW_SCALE);
     SDL_RenderFillRect(renderer, &rct);
 }
 
-void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list *entities, list *bullets)
+void __draw_star(SDL_Renderer *renderer, int mode, int tiks, int x, int y)
+{
+    int tik_variant = (abs(80 - ((tiks / 50) % 160)) + 19) / 20 * 20;
+    SDL_SetRenderDrawColor(renderer, tik_variant + 150 + (mode == 0 ? 20 : 0), tik_variant + 150 + (mode == 1 ? 20 : 0), tik_variant + 150 + (mode == 2 ? 20 : 0), 255);
+    SDL_Rect rct = {
+        (x + 2) * WINDOW_SCALE,
+        (y + 1) * WINDOW_SCALE,
+        1 * WINDOW_SCALE,
+        3 * WINDOW_SCALE};
+    SDL_RenderFillRect(renderer, &rct);
+    rct = (SDL_Rect){
+        (x + 1) * WINDOW_SCALE,
+        (y + 2) * WINDOW_SCALE,
+        3 * WINDOW_SCALE,
+        1 * WINDOW_SCALE};
+    SDL_RenderFillRect(renderer, &rct);
+
+    if ((tiks / 1000) % 2)
+    {
+        rct = (SDL_Rect){
+            x * WINDOW_SCALE,
+            (y + 2) * WINDOW_SCALE,
+            5 * WINDOW_SCALE,
+            1 * WINDOW_SCALE};
+        SDL_RenderFillRect(renderer, &rct);
+    }
+    else
+    {
+        rct = (SDL_Rect){
+            (x + 2) * WINDOW_SCALE,
+            y * WINDOW_SCALE,
+            1 * WINDOW_SCALE,
+            5 * WINDOW_SCALE};
+        SDL_RenderFillRect(renderer, &rct);
+    }
+}
+
+void __draw_background(SDL_Renderer *renderer, int tiks, int time_delta)
+{
+    list *i = background_stars;
+    for (int i_cnt = 0; i; i_cnt++)
+    {
+        __draw_star(renderer, ((visual_effect *)i->val)->texture, ((visual_effect *)i->val)->type + tiks, ((visual_effect *)i->val)->x, ((visual_effect *)i->val)->y);
+        ((visual_effect *)i->val)->y += ((visual_effect *)i->val)->yspeed * time_delta / 1000;
+        if (((visual_effect *)i->val)->y > WINDOW_HEIGHT) {
+            i = i->next;
+            removeElement(&background_stars, i_cnt--);
+            continue;
+        }
+        i = i->next;
+    }
+
+    if (rand() % 1000000 < 250 * time_delta)
+    {
+        addElement(&background_stars, sizeof(visual_effect), 0);
+        ((visual_effect *)background_stars->val)->type = rand() % 10000;
+        ((visual_effect *)background_stars->val)->x = rand() % WINDOW_WIDTH;
+        ((visual_effect *)background_stars->val)->y = -5;
+        ((visual_effect *)background_stars->val)->xspeed = 0;
+        ((visual_effect *)background_stars->val)->yspeed = 10;
+        ((visual_effect *)background_stars->val)->texture = rand() % 3;
+    }
+}
+
+void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim, player p, list *entities, list *bullets)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
+    __draw_background(renderer, tiks, time_delta);
+
     for (list *i = bullets; i; i = i->next)
     {
+        __draw_anim(renderer, effects[0], (int)((bullet *)i->val)->x - (32 - get_texture_width(9)) / 2, (int)((bullet *)i->val)->y - (32 - get_texture_height(9)) / 2, 0, 1);
         __draw_anim(renderer, textures[9], (int)((bullet *)i->val)->x, (int)((bullet *)i->val)->y, 0, 1);
     }
 

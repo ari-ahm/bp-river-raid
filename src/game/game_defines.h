@@ -44,4 +44,13 @@ typedef struct {
     int w, h;
 } bullet;
 
+typedef struct {
+    int type;
+    long double x;
+    long double y;
+    long double xspeed;
+    long double yspeed;
+    int texture;
+} visual_effect;
+
 #endif
