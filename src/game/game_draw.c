@@ -73,6 +73,21 @@ void __draw_anim(SDL_Renderer *renderer, SDL_Texture *txt, int x, int y, int fra
     SDL_RenderCopy(renderer, txt, &src_rect, &dest_rect);
 }
 
+void __draw_health(SDL_Renderer *renderer, int x, int y, int w, int h, long double hl)
+{
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_Rect rct = {
+        x * WINDOW_SCALE,
+        y * WINDOW_SCALE,
+        w * WINDOW_SCALE,
+        h * WINDOW_SCALE
+    };
+    SDL_RenderFillRect(renderer, &rct);
+    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    rct.w = (int)(w * hl * WINDOW_SCALE);
+    SDL_RenderFillRect(renderer, &rct);
+}
+
 void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list *entities, list *bullets)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -95,10 +110,10 @@ void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list 
             break;
         }
 
-        // if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health)
-        // {
-
-        // }
+        if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health)
+        {
+            __draw_health(renderer, ((game_entity *)i->val)->x, ((game_entity *)i->val)->y - 10, ((game_entity *)i->val)->w, 4, (long double)((game_entity *)i->val)->health / ((game_entity *)i->val)->max_health);
+        }
     }
 
     if (p.invincible && (p.invincible / 500) % 2)
