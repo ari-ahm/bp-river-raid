@@ -5,7 +5,7 @@
 #include "game_defines.h"
 #include "game_draw.h"
 
-void update(int time_delta, game_input_move gim, player *p, list **entities);
+void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets);
 
 int run_game(SDL_Renderer *renderer, int lvl)
 {
@@ -15,8 +15,9 @@ int run_game(SDL_Renderer *renderer, int lvl)
         return 0;
     }
     game_input_move gim = {0, 0, 0, 0, 0};
-    player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0, get_texture_width(0), get_texture_height(0), 100, 0};
+    player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0, get_texture_width(0), get_texture_height(0), 100, 0, 0, 0};
     list *entities = NULL;
+    list *bullets = NULL;
     while (1)
     {
         current_frame = SDL_GetTicks();
@@ -33,6 +34,8 @@ int run_game(SDL_Renderer *renderer, int lvl)
                 destroy_textures();
                 while (entities)
                     removeElement(&entities, 0);
+                while (bullets)
+                    removeElement(&bullets, 0);
                 return 0;
             }
             else if (ev.type == SDL_KEYDOWN)
@@ -55,8 +58,8 @@ int run_game(SDL_Renderer *renderer, int lvl)
             }
         }
 
-        update(time_delta, gim, &p, &entities);
+        update(time_delta, gim, &p, &entities, &bullets);
 
-        draw(renderer, SDL_GetTicks(), gim, p, entities);
+        draw(renderer, SDL_GetTicks(), gim, p, entities, bullets);
     }
 }

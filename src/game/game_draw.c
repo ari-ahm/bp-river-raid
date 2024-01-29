@@ -13,7 +13,9 @@ const char *GAME_TEXTURES_PATH[] = {
     "assets/asteroids/asteroid2.png",
     "assets/asteroids/asteroid3.png",
     "assets/asteroids/asteroid4.png",
-    "assets/cargo_ship.png"};
+    "assets/cargo_ship.png",
+    "assets/main_ship_engines/base_engine.png",
+    "assets/bullet.png"};
 
 static SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH)];
 static TTF_Font *font;
@@ -71,23 +73,32 @@ void __draw_anim(SDL_Renderer *renderer, SDL_Texture *txt, int x, int y, int fra
     SDL_RenderCopy(renderer, txt, &src_rect, &dest_rect);
 }
 
-void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list *entities)
+void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list *entities, list *bullets)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+
+    for (list *i = bullets; i; i = i->next)
+    {
+        __draw_anim(renderer, textures[9], (int)((bullet *)i->val)->x, (int)((bullet *)i->val)->y, 0, 1);
+    }
 
     for (list *i = entities; i; i = i->next)
     {
         switch (((game_entity *)i->val)->type)
         {
-            case 1:
-                __draw_anim(renderer, textures[3 + ((game_entity *)i->val)->texture], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-                break;
-            case 2:
-                __draw_anim(renderer, textures[7], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-                break;
+        case 1:
+            __draw_anim(renderer, textures[3 + ((game_entity *)i->val)->texture], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
+            break;
+        case 2:
+            __draw_anim(renderer, textures[7], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
+            break;
         }
 
+        // if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health)
+        // {
+
+        // }
     }
 
     if (p.invincible && (p.invincible / 500) % 2)
@@ -107,6 +118,10 @@ void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list 
         SDL_SetTextureAlphaMod(textures[0], 127);
         __draw_anim(renderer, textures[0], (int)p.x, (int)p.y, 0, 1);
         SDL_SetTextureAlphaMod(textures[0], 255);
+
+        SDL_SetTextureAlphaMod(textures[8], 127);
+        __draw_anim(renderer, textures[8], (int)p.x, (int)p.y, 0, 1);
+        SDL_SetTextureAlphaMod(textures[8], 255);
     }
     else
     {
@@ -115,6 +130,7 @@ void draw(SDL_Renderer *renderer, int tiks, game_input_move gim, player p, list 
         else
             __draw_anim(renderer, textures[1], (int)p.x, (int)p.y, (tiks / 200) % 3, 3);
         __draw_anim(renderer, textures[0], (int)p.x, (int)p.y, 0, 1);
+        __draw_anim(renderer, textures[8], (int)p.x, (int)p.y, 0, 1);
     }
 
     char health[20];
