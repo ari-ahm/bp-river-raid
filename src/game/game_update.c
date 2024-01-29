@@ -88,8 +88,8 @@ void spawn_entities(int time_delta, list **entities)
         ((game_entity *)(*entities)->val)->damage = 5;
         ((game_entity *)(*entities)->val)->health = 100;
         ((game_entity *)(*entities)->val)->max_health = 100;
-        ((game_entity *)(*entities)->val)->w = get_texture_width((rand() % 4) + 3);
-        ((game_entity *)(*entities)->val)->h = get_texture_height((rand() % 4) + 3);
+        ((game_entity *)(*entities)->val)->w = get_texture_width((((game_entity *)(*entities)->val)->texture % 4) + 3);
+        ((game_entity *)(*entities)->val)->h = get_texture_height((((game_entity *)(*entities)->val)->texture % 4) + 3);
     }
     if (rand() % 1000000 < cargo_spawn_probability * time_delta)
     {
@@ -101,8 +101,8 @@ void spawn_entities(int time_delta, list **entities)
         ((game_entity *)(*entities)->val)->yspeed = 40 + rand() % 20;
         ((game_entity *)(*entities)->val)->texture = 0;
         ((game_entity *)(*entities)->val)->damage = 10;
-        ((game_entity *)(*entities)->val)->health = 250;
-        ((game_entity *)(*entities)->val)->max_health = 250;
+        ((game_entity *)(*entities)->val)->health = 175;
+        ((game_entity *)(*entities)->val)->max_health = 175;
         ((game_entity *)(*entities)->val)->w = get_texture_width(7);
         ((game_entity *)(*entities)->val)->h = get_texture_height(7);
     }
