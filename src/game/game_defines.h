@@ -30,9 +30,13 @@ typedef struct {
     int w, h;
     long double xspeed;
     long double yspeed;
+    long double xacc;
+    long double yacc;
     int damage;
     int health;
     int max_health;
+    int rnd;
+    int attack_cooldown;
 } game_entity;
 
 typedef struct {

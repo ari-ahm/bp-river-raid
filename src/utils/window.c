@@ -32,13 +32,20 @@ int init_window()
 
     if (VERBOSE_ERR)
         fprintf(stderr, "[INF] creating main renderer\n");
-    main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    main_renderer = SDL_CreateRenderer(main_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
     if (main_renderer == NULL)
     {
         fprintf(stderr, "[ERR] couldn't create main renderer\n%s\n", SDL_GetError());
         SDL_DestroyWindow(main_window);
         main_window = NULL;
         return 1;
+    }
+
+    if (VERBOSE_ERR)
+        fprintf(stderr, "[INF] setting main renderer blend mode\n");
+    if (SDL_SetRenderDrawBlendMode(main_renderer, SDL_BLENDMODE_BLEND))
+    {
+        fprintf(stderr, "[ERR] couldn't set main renderer blend mode\n%s\n", SDL_GetError());
     }
 
     if (VERBOSE_ERR)

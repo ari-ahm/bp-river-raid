@@ -8,16 +8,20 @@
 #include "../utils/utils.h"
 
 const char *GAME_TEXTURES_PATH[] = {
-    "assets/main_ship_bases/full_health.png",
-    "assets/main_ship_engine_effects/base_engine_idle.png",
-    "assets/main_ship_engine_effects/base_engine_powering.png",
+    "assets/main_ship/main_ship_bases/full_health.png",
+    "assets/main_ship/main_ship_engine_effects/base_engine_idle.png",
+    "assets/main_ship/main_ship_engine_effects/base_engine_powering.png",
     "assets/asteroids/asteroid1.png",
     "assets/asteroids/asteroid2.png",
     "assets/asteroids/asteroid3.png",
     "assets/asteroids/asteroid4.png",
     "assets/cargo_ship.png",
-    "assets/main_ship_engines/base_engine.png",
-    "assets/bullet.png"};
+    "assets/main_ship/main_ship_engines/base_engine.png",
+    "assets/bullet.png",
+    "assets/bomber/bomber_base.png",
+    "assets/bomber/bomber_bullet.png",
+    "assets/bomber/bomber_destruction.png",
+    "assets/bomber/bomber_engine_effect.png"};
 
 static SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH)];
 static SDL_Texture *effects[1];
@@ -36,7 +40,7 @@ int load_textures(SDL_Renderer *renderer)
             return 1;
         SDL_QueryTexture(textures[i], NULL, NULL, &texture_dim[i][0], &texture_dim[i][1]);
     }
-    effects[0] = __gaussian_blur(renderer, textures[9], 32, 32, 4, 2);
+    effects[0] = __gaussian_blur(renderer, textures[9], 32, 32, 4, 3);
     font = TTF_OpenFont("assets/Minecraft.ttf", 24);
 
     for (int i = 0; i < 20; i++)
@@ -87,6 +91,8 @@ SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, in
 
     SDL_Texture *ret = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
     SDL_SetRenderTarget(renderer, ret);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureBlendMode(ret, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
@@ -108,7 +114,7 @@ SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, in
             SDL_GetRGBA(((Uint32 *)srf->pixels)[i + j * h], srf->format, &txt_px[i][j].r, &txt_px[i][j].g, &txt_px[i][j].b, &txt_px[i][j].a);
     SDL_FreeSurface(srf);
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
     for (int i = 0; i < w; i++)
@@ -136,6 +142,7 @@ SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, in
     }
 
     SDL_SetRenderTarget(renderer, NULL);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     return ret;
 }
 
@@ -260,11 +267,19 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
         case 2:
             __draw_anim(renderer, textures[7], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
             break;
+        case 3:
+            __draw_anim(renderer, textures[13], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, ((tiks + ((game_entity *)i->val)->rnd) / 200) % 8, 8);
+            __draw_anim(renderer, textures[10], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
+            break;
+        case 4:
+            __draw_anim(renderer, textures[11], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, ((tiks + ((game_entity *)i->val)->rnd) / 200) % 8, 8);
+            break;
         }
 
         if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health)
         {
-            __draw_health(renderer, ((game_entity *)i->val)->x, ((game_entity *)i->val)->y - 10, ((game_entity *)i->val)->w, 4, (long double)((game_entity *)i->val)->health / ((game_entity *)i->val)->max_health);
+            int w = ((game_entity *)i->val)->max_health;
+            __draw_health(renderer, ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - w) / 2, ((game_entity *)i->val)->y - 10, w, 4, (long double)((game_entity *)i->val)->health / ((game_entity *)i->val)->max_health);
         }
     }
 
