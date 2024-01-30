@@ -166,16 +166,16 @@ void __draw_anim(SDL_Renderer *renderer, SDL_Texture *txt, int x, int y, int fra
     SDL_RenderCopy(renderer, txt, &src_rect, &dest_rect);
 }
 
-void __draw_health(SDL_Renderer *renderer, int x, int y, int w, int h, long double hl)
+void __draw_health(SDL_Renderer *renderer, int x, int y, int w, int h, long double hl, SDL_Color fg, SDL_Color bg)
 {
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, bg.r, bg.g, bg.b, bg.a);
     SDL_Rect rct = {
         x * WINDOW_SCALE,
         y * WINDOW_SCALE,
         w * WINDOW_SCALE,
         h * WINDOW_SCALE};
     SDL_RenderFillRect(renderer, &rct);
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    SDL_SetRenderDrawColor(renderer, fg.r, fg.g, fg.b, fg.a);
     rct.w = (int)(w * hl * WINDOW_SCALE);
     SDL_RenderFillRect(renderer, &rct);
 }
@@ -279,7 +279,7 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
         if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health)
         {
             int w = ((game_entity *)i->val)->max_health;
-            __draw_health(renderer, ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - w) / 2, ((game_entity *)i->val)->y - 10, w, 4, (long double)((game_entity *)i->val)->health / ((game_entity *)i->val)->max_health);
+            __draw_health(renderer, ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - w) / 2, ((game_entity *)i->val)->y - 10, w, 4, (long double)((game_entity *)i->val)->health / ((game_entity *)i->val)->max_health, (SDL_Color){0, 255, 0, 255}, (SDL_Color){255, 0, 0, 255});
         }
     }
 
@@ -315,9 +315,7 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
         __draw_anim(renderer, textures[8], (int)p.x, (int)p.y, 0, 1);
     }
 
-    char health[20];
-    sprintf(health, "Health : %d", p.health);
-    render_text_by_center(renderer, font, 100, 40, health, (SDL_Color){255, 255, 255, 255});
+    __draw_health(renderer, p.x + (p.w - 100) / 2, p.y + get_texture_height(0) + 10, 100, 4, (long double)p.health / 100, (SDL_Color){0, 128, 255, 255}, (SDL_Color){0x02, 0x3b, 0x59, 255});
 
     SDL_RenderPresent(renderer);
 }
