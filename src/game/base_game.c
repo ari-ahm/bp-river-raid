@@ -5,6 +5,17 @@
 #include "game_defines.h"
 #include "game_draw.h"
 
+/*
+
+TODO
+
+particle system
+music
+score visual effect(like 1UP)
+final boss
+
+*/
+
 void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets);
 
 int run_game(SDL_Renderer *renderer, int lvl)
