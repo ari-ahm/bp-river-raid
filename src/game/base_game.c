@@ -16,7 +16,7 @@ final boss
 
 */
 
-void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets);
+void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets, list **visual_effects, int lvl);
 
 int run_game(SDL_Renderer *renderer, int lvl)
 {
@@ -29,6 +29,7 @@ int run_game(SDL_Renderer *renderer, int lvl)
     player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0, get_texture_width(0), get_texture_height(0), 100, 0, 0, 0};
     list *entities = NULL;
     list *bullets = NULL;
+    list *visual_effects = NULL;
     while (1)
     {
         current_frame = SDL_GetTicks();
@@ -69,7 +70,7 @@ int run_game(SDL_Renderer *renderer, int lvl)
             }
         }
 
-        update(time_delta, gim, &p, &entities, &bullets);
+        update(time_delta, gim, &p, &entities, &bullets, &visual_effects, lvl);
 
         draw(renderer, SDL_GetTicks(), time_delta, gim, p, entities, bullets);
     }

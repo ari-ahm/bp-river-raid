@@ -24,7 +24,9 @@ const char *GAME_TEXTURES_PATH[] = {
     "assets/bomber/bomber_engine_effect.png",
     "assets/fighter_jet/fighter_jet.png",
     "assets/fighter_jet/shot/shot5_asset.png",
-    "assets/suicide_drone.png"};
+    "assets/suicide_drone.png",
+    "assets/heart.png"
+};
 
 long double pi = 3.141592653589793238462643383279502884197;
 long double e = 2.7182818284590452353602874713526624977572;
@@ -327,16 +329,20 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
             else
             {
                 long double nsb = -dy / dx;
-                for (dir = 0; nsb < tan_vals[dir] && nsb < 3; dir++);
+                for (dir = 0; nsb < tan_vals[dir] && nsb < 3; dir++)
+                    ;
                 if (dx < 0)
                     dir += 4;
                 dir %= 8;
             }
             __draw_anim2d(renderer, textures[16], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, ((tiks + ((game_entity *)i->val)->rnd) / 200) % 6, dir, 6, 8);
             break;
+        case 8:
+            __draw_anim(renderer, textures[17], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
+            break;
         }
 
-        if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health && ((game_entity *)i->val)->type != 4 && ((game_entity *)i->val)->type != 6)
+        if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health && ((game_entity *)i->val)->type != 4 && ((game_entity *)i->val)->type != 6 && ((game_entity *)i->val)->type != 8)
         {
             int w = ((game_entity *)i->val)->max_health;
             __draw_health(renderer, ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - w) / 2, ((game_entity *)i->val)->y - 10, w, 4, (long double)max(0, ((game_entity *)i->val)->health) / ((game_entity *)i->val)->max_health, (SDL_Color){0, 255, 0, 255}, (SDL_Color){255, 0, 0, 255});
@@ -375,7 +381,12 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
         __draw_anim(renderer, textures[8], (int)p.x, (int)p.y, 0, 1);
     }
 
-    __draw_health(renderer, p.x + (p.w - 100) / 2, p.y + get_texture_height(0) + 10, 100, 4, (long double)p.health / 100, (SDL_Color){0, 128, 255, 255}, (SDL_Color){0x02, 0x3b, 0x59, 255});
+    __draw_health(
+        renderer, p.x + (p.w - 100) / 2,
+        p.y + get_texture_height(0) + 10, 100, 4,
+        (long double)p.health / 100,
+        (SDL_Color){0, 128, 255, 255},
+        (SDL_Color){0x02, 0x3b, 0x59, 255});
 
     SDL_RenderPresent(renderer);
 }

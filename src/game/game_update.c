@@ -5,36 +5,42 @@
 #include "game_draw.h"
 #include "../utils/linkedList.h"
 #include "../utils/utils.h"
+#include "entities/entities.h"
 
 const long double player_acceleration = 150;
-const long double drone_acceleration = 150;
-const long double player_drag_coef = 0.05;
-const long double player_friction = 1;
+const long double drone_acceleration = 140;
+const long double drag_coef = 0.05;
+const long double friction = 1;
 
-const int mine_spawn_probability = 150;
-const int cargo_spawn_probability = 100;
-const int bomber_spawn_probability = 50;
-const int fighter_spawn_probability = 50;
-const int drone_spawn_probability = 50;
+const struct ENTITY_CALLBACK ENTITIES_DEF[] = {
+    {{0, 0, 0}, NULL, NULL, NULL},
+    {{150, 150, 150}, mine_create, mine_update, mine_death},
+    {{100, 100, 100}, cargo_create, cargo_update, cargo_death},
+    {{50, 50, 50}, bomber_create, bomber_update, bomber_death},
+    {{0, 0, 0}, bomber_bullet_create, bomber_bullet_update, bomber_bullet_death},
+    {{50, 50, 50}, fighter_create, fighter_update, fighter_death},
+    {{0, 0, 0}, fighter_bullet_create, fighter_bullet_update, fighter_bullet_death},
+    {{50, 50, 50}, drone_create, drone_update, drone_death},
+    {{20, 20, 20}, heart_create, heart_update, heart_death}};
 
 void __update_player_pos(int time_delta, game_input_move gim, player *p);
-void __update_entities(int time_delta, list **entities, player p);
-void __update_entities_pos(int time_delta, list **entities);
-void __spawn_entities(int time_delta, list **entities);
+void __update_entities(int time_delta, list **entities, list **visual_effects, player p);
+void __update_entities_pos(int time_delta, list **entities, list **visual_effects);
+void __spawn_entities(int time_delta, list **entities, list **visual_effects, int lvl);
 void __check_player_collision(player *p, list **entities);
 void __update_bullets(int time_delta, game_input_move gim, player *p, list **bullets);
 void __update_bullets_pos(int time_delta, list **bullets);
-void __check_bullet_collision(list **entities, list **bullets);
+void __check_bullet_collision(list **entities, list **bullets, list **visual_effects);
 
-void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets)
+void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets, list **visual_effects, int lvl)
 {
     __update_player_pos(time_delta, gim, p);
     __update_bullets(time_delta, gim, p, bullets);
     __update_bullets_pos(time_delta, bullets);
-    __update_entities_pos(time_delta, entities);
-    __spawn_entities(time_delta, entities);
-    __check_bullet_collision(entities, bullets);
-    __update_entities(time_delta, entities, *p);
+    __update_entities_pos(time_delta, entities, visual_effects);
+    __spawn_entities(time_delta, entities, visual_effects, lvl);
+    __check_bullet_collision(entities, bullets, visual_effects);
+    __update_entities(time_delta, entities, visual_effects, *p);
     if (p->invincible - time_delta <= 0)
     {
         p->invincible = 0;
@@ -49,8 +55,8 @@ void update(int time_delta, game_input_move gim, player *p, list **entities, lis
 void __update_player_pos(int time_delta, game_input_move gim, player *p)
 {
 
-    long double xdrag = p->xspeed * p->xspeed * player_drag_coef + player_friction;
-    long double ydrag = p->yspeed * p->yspeed * player_drag_coef + player_friction;
+    long double xdrag = p->xspeed * p->xspeed * drag_coef + friction;
+    long double ydrag = p->yspeed * p->yspeed * drag_coef + friction;
 
     long double xacc = (gim.r * player_acceleration + gim.l * -player_acceleration + (p->xspeed > 0 ? -1 : 1) * xdrag);
     long double yacc = (gim.d * player_acceleration + gim.u * -player_acceleration + (p->yspeed > 0 ? -1 : 1) * ydrag);
@@ -67,7 +73,7 @@ void __update_player_pos(int time_delta, game_input_move gim, player *p)
     p->y += (p->yspeed * time_delta / 1000);
 }
 
-void __update_entities_pos(int time_delta, list **entities)
+void __update_entities_pos(int time_delta, list **entities, list **visual_effects)
 {
     list *i = *entities;
     for (int j = 0; i; j++)
@@ -80,6 +86,7 @@ void __update_entities_pos(int time_delta, list **entities)
 
         if (((game_entity *)i->val)->y > WINDOW_HEIGHT + 100 || ((game_entity *)i->val)->y < -200 || ((game_entity *)i->val)->x < -100 || ((game_entity *)i->val)->x > WINDOW_WIDTH)
         {
+            ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
             i = i->next;
             removeElement(entities, j--);
             continue;
@@ -88,103 +95,15 @@ void __update_entities_pos(int time_delta, list **entities)
     }
 }
 
-void __spawn_entities(int time_delta, list **entities)
+void __spawn_entities(int time_delta, list **entities, list **visual_effects, int lvl)
 {
-    if (rand() % 1000000 < mine_spawn_probability * time_delta)
+    for (int i = 0; i < ARRAY_SIZE(ENTITIES_DEF); i++)
     {
-        addElement(entities, sizeof(game_entity), 0);
-        ((game_entity *)(*entities)->val)->type = 1;
-        ((game_entity *)(*entities)->val)->xspeed = 0;
-        ((game_entity *)(*entities)->val)->yspeed = 20 + rand() % 10;
-        ((game_entity *)(*entities)->val)->xacc = 0;
-        ((game_entity *)(*entities)->val)->yacc = 0;
-        ((game_entity *)(*entities)->val)->texture = rand() % 4;
-        ((game_entity *)(*entities)->val)->y = -100;
-        ((game_entity *)(*entities)->val)->x = rand() % (WINDOW_WIDTH - get_texture_width(((game_entity *)(*entities)->val)->texture + 3));
-        ((game_entity *)(*entities)->val)->attack_cooldown = 1000;
-        ((game_entity *)(*entities)->val)->damage = 5;
-        ((game_entity *)(*entities)->val)->health = 50;
-        ((game_entity *)(*entities)->val)->max_health = 50;
-        ((game_entity *)(*entities)->val)->rnd = rand() % 1000000;
-        ((game_entity *)(*entities)->val)->w = get_texture_width(((game_entity *)(*entities)->val)->texture + 3);
-        ((game_entity *)(*entities)->val)->h = get_texture_height(((game_entity *)(*entities)->val)->texture + 3);
-    }
-    if (rand() % 1000000 < cargo_spawn_probability * time_delta)
-    {
-        addElement(entities, sizeof(game_entity), 0);
-        ((game_entity *)(*entities)->val)->type = 2;
-        ((game_entity *)(*entities)->val)->y = -100;
-        ((game_entity *)(*entities)->val)->x = rand() % (WINDOW_WIDTH - get_texture_width(7));
-        ((game_entity *)(*entities)->val)->xspeed = 0;
-        ((game_entity *)(*entities)->val)->yspeed = 40 + rand() % 20;
-        ((game_entity *)(*entities)->val)->xacc = 0;
-        ((game_entity *)(*entities)->val)->yacc = 0;
-        ((game_entity *)(*entities)->val)->texture = 0;
-        ((game_entity *)(*entities)->val)->attack_cooldown = 1000;
-        ((game_entity *)(*entities)->val)->damage = 10;
-        ((game_entity *)(*entities)->val)->health = 150;
-        ((game_entity *)(*entities)->val)->max_health = 150;
-        ((game_entity *)(*entities)->val)->rnd = rand() % 1000000;
-        ((game_entity *)(*entities)->val)->w = get_texture_width(7);
-        ((game_entity *)(*entities)->val)->h = get_texture_height(7);
-    }
-    if (rand() % 1000000 < bomber_spawn_probability * time_delta)
-    {
-        addElement(entities, sizeof(game_entity), 0);
-        int dir = (rand() % 2);
-        ((game_entity *)(*entities)->val)->type = 3;
-        ((game_entity *)(*entities)->val)->y = -100;
-        ((game_entity *)(*entities)->val)->x = dir * (WINDOW_WIDTH - get_texture_width(10));
-        ((game_entity *)(*entities)->val)->xspeed = 0;
-        ((game_entity *)(*entities)->val)->yspeed = 25 + rand() % 20;
-        ((game_entity *)(*entities)->val)->xacc = dir ? -3 : 3;
-        ((game_entity *)(*entities)->val)->yacc = 0;
-        ((game_entity *)(*entities)->val)->texture = 0;
-        ((game_entity *)(*entities)->val)->attack_cooldown = 1000;
-        ((game_entity *)(*entities)->val)->damage = 10;
-        ((game_entity *)(*entities)->val)->health = 100;
-        ((game_entity *)(*entities)->val)->max_health = 100;
-        ((game_entity *)(*entities)->val)->rnd = rand() % 1000000;
-        ((game_entity *)(*entities)->val)->w = get_texture_width(10);
-        ((game_entity *)(*entities)->val)->h = get_texture_height(10);
-    }
-    if (rand() % 1000000 < fighter_spawn_probability * time_delta)
-    {
-        addElement(entities, sizeof(game_entity), 0);
-        ((game_entity *)(*entities)->val)->type = 5;
-        ((game_entity *)(*entities)->val)->y = -100;
-        ((game_entity *)(*entities)->val)->x = rand() % (WINDOW_WIDTH - get_texture_width(14));
-        ((game_entity *)(*entities)->val)->xspeed = 0;
-        ((game_entity *)(*entities)->val)->yspeed = 35 + rand() % 20;
-        ((game_entity *)(*entities)->val)->xacc = 0;
-        ((game_entity *)(*entities)->val)->yacc = 0;
-        ((game_entity *)(*entities)->val)->texture = 0;
-        ((game_entity *)(*entities)->val)->attack_cooldown = 1000;
-        ((game_entity *)(*entities)->val)->damage = 50;
-        ((game_entity *)(*entities)->val)->health = 50;
-        ((game_entity *)(*entities)->val)->max_health = 50;
-        ((game_entity *)(*entities)->val)->rnd = rand() % 1000000;
-        ((game_entity *)(*entities)->val)->w = get_texture_width(14);
-        ((game_entity *)(*entities)->val)->h = get_texture_height(14);
-    }
-    if (rand() % 1000000 < drone_spawn_probability * time_delta)
-    {
-        addElement(entities, sizeof(game_entity), 0);
-        ((game_entity *)(*entities)->val)->type = 7;
-        ((game_entity *)(*entities)->val)->y = -100;
-        ((game_entity *)(*entities)->val)->x = rand() % (WINDOW_WIDTH - get_texture_width(14));
-        ((game_entity *)(*entities)->val)->xspeed = 0;
-        ((game_entity *)(*entities)->val)->yspeed = 20;
-        ((game_entity *)(*entities)->val)->xacc = 0;
-        ((game_entity *)(*entities)->val)->yacc = 0;
-        ((game_entity *)(*entities)->val)->texture = 0;
-        ((game_entity *)(*entities)->val)->attack_cooldown = 0;
-        ((game_entity *)(*entities)->val)->damage = 50;
-        ((game_entity *)(*entities)->val)->health = 20;
-        ((game_entity *)(*entities)->val)->max_health = 20;
-        ((game_entity *)(*entities)->val)->rnd = rand() % 1000000;
-        ((game_entity *)(*entities)->val)->w = get_texture_width(16) / 6;
-        ((game_entity *)(*entities)->val)->h = get_texture_height(16) / 8;
+        if (rand() % 1000000 < ENTITIES_DEF[i].prob[lvl] * time_delta)
+        {
+            addElement(entities, sizeof(game_entity), 0);
+            ENTITIES_DEF[i].create((game_entity *)(*entities)->val, visual_effects);
+        }
     }
 }
 
@@ -196,7 +115,10 @@ void __check_player_collision(player *p, list **entities)
         {
             p->invincible = 5000;
             p->health -= ((game_entity *)i->val)->damage;
+            p->health = min(100, p->health);
             ((game_entity *)i->val)->health -= 20;
+            if (((game_entity *)i->val)->type == 8)
+                ((game_entity *)i->val)->health = -1;
             break;
         }
     }
@@ -240,7 +162,7 @@ void __update_bullets_pos(int time_delta, list **bullets)
     }
 }
 
-void __check_bullet_collision(list **entities, list **bullets)
+void __check_bullet_collision(list **entities, list **bullets, list **visual_effects)
 {
     list *i = *entities;
     for (int i_cnt = 0; i; i_cnt++)
@@ -254,6 +176,7 @@ void __check_bullet_collision(list **entities, list **bullets)
                 ((game_entity *)i->val)->health -= ((bullet *)j->val)->damage;
                 if (((game_entity *)i->val)->health <= 0)
                 {
+                    ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
                     removed = 1;
                     i = i->next;
                     removeElement(entities, i_cnt--);
@@ -276,93 +199,20 @@ void __check_bullet_collision(list **entities, list **bullets)
     }
 }
 
-void __update_entities(int time_delta, list **entities, player p)
+void __update_entities(int time_delta, list **entities, list **visual_effects, player p)
 {
     list *i = *entities;
+    for (; i; i = i->next)
+    {
+        ENTITIES_DEF[((game_entity *)i->val)->type].update((game_entity *)i->val, time_delta, entities, visual_effects, p);
+    }
+
+    i = *entities;
     for (int i_cnt = 0; i; i_cnt++)
     {
-        if (((game_entity *)i->val)->type == 3)
-        {
-            if (((game_entity *)i->val)->attack_cooldown - time_delta < 0)
-            {
-                ((game_entity *)i->val)->attack_cooldown = 5000;
-                addElement(entities, sizeof(game_entity), 0);
-                i_cnt++;
-
-                ((game_entity *)(*entities)->val)->type = 4;
-                ((game_entity *)(*entities)->val)->y = ((game_entity *)i->val)->y + ((game_entity *)i->val)->h;
-                ((game_entity *)(*entities)->val)->x = ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - get_texture_width(11) / 8)/ 2;
-                ((game_entity *)(*entities)->val)->xspeed = 0;
-                ((game_entity *)(*entities)->val)->yspeed = 50 + rand() % 10;
-                ((game_entity *)(*entities)->val)->xacc = 0;
-                ((game_entity *)(*entities)->val)->yacc = 0;
-                ((game_entity *)(*entities)->val)->texture = 0;
-                ((game_entity *)(*entities)->val)->attack_cooldown = 0;
-                ((game_entity *)(*entities)->val)->damage = 20;
-                ((game_entity *)(*entities)->val)->health = 1;
-                ((game_entity *)(*entities)->val)->max_health = 1;
-                ((game_entity *)(*entities)->val)->w = get_texture_width(11) / 8;
-                ((game_entity *)(*entities)->val)->h = get_texture_height(11);
-                ((game_entity *)(*entities)->val)->rnd = rand() % 1000000;
-            }
-            else
-            {
-                ((game_entity *)i->val)->attack_cooldown -= time_delta;
-            }
-        }
-
-        if (((game_entity *)i->val)->type == 5)
-        {
-            if (((game_entity *)i->val)->attack_cooldown - time_delta < 0)
-            {
-                ((game_entity *)i->val)->attack_cooldown = ((game_entity *)i->val)->texture ? 2500 : 500;
-                ((game_entity *)i->val)->texture = 1 - ((game_entity *)i->val)->texture;
-                addElement(entities, sizeof(game_entity), 0);
-                i_cnt++;
-
-                ((game_entity *)(*entities)->val)->type = 6;
-                ((game_entity *)(*entities)->val)->y = ((game_entity *)i->val)->y + ((game_entity *)i->val)->h;
-                ((game_entity *)(*entities)->val)->x = ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - get_texture_width(15)) / 2;
-                ((game_entity *)(*entities)->val)->xspeed = 0;
-                ((game_entity *)(*entities)->val)->yspeed = 150;
-                ((game_entity *)(*entities)->val)->xacc = 0;
-                ((game_entity *)(*entities)->val)->yacc = 0;
-                ((game_entity *)(*entities)->val)->texture = 0;
-                ((game_entity *)(*entities)->val)->attack_cooldown = 0;
-                ((game_entity *)(*entities)->val)->damage = 10;
-                ((game_entity *)(*entities)->val)->health = 1;
-                ((game_entity *)(*entities)->val)->max_health = 1;
-                ((game_entity *)(*entities)->val)->w = get_texture_width(15);
-                ((game_entity *)(*entities)->val)->h = get_texture_height(15);
-                ((game_entity *)(*entities)->val)->rnd = rand() % 1000000;
-            }
-            else
-            {
-                ((game_entity *)i->val)->attack_cooldown -= time_delta;
-            }
-        }
-
-        if (((game_entity *)i->val)->type == 7)
-        {
-            long double xdrag = ((game_entity *)i->val)->xspeed * ((game_entity *)i->val)->xspeed * player_drag_coef + player_friction;
-            long double ydrag = ((game_entity *)i->val)->yspeed * ((game_entity *)i->val)->yspeed * player_drag_coef + player_friction;
-
-            ((game_entity *)i->val)->xacc = (((game_entity *)i->val)->xspeed > 0 ? -1 : 1) * xdrag;
-            ((game_entity *)i->val)->yacc = (((game_entity *)i->val)->yspeed > 0 ? -1 : 1) * ydrag;
-
-            long double dx = p.x - ((game_entity *)i->val)->x;
-            long double dy = p.y - ((game_entity *)i->val)->y;
-            ((game_entity *)i->val)->xacc += (dx / sqrt(dx * dx + dy * dy)) * drone_acceleration;
-            ((game_entity *)i->val)->yacc += (dy / sqrt(dx * dx + dy * dy)) * drone_acceleration;
-
-            if (((game_entity *)i->val)->x < 0 || ((game_entity *)i->val)->x + ((game_entity *)i->val)->w >= WINDOW_WIDTH)
-                ((game_entity *)i->val)->xacc += (((game_entity *)i->val)->x < 0 ? 1 : -1) * 300;
-            if (((game_entity *)i->val)->y < 0 || ((game_entity *)i->val)->y + ((game_entity *)i->val)->h >= WINDOW_HEIGHT)
-                ((game_entity *)i->val)->yacc += (((game_entity *)i->val)->y < 0 ? 1 : -1) * 300;
-        }
-
         if (((game_entity *)i->val)->health <= 0)
         {
+            ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
             i = i->next;
             removeElement(entities, i_cnt--);
             continue;
