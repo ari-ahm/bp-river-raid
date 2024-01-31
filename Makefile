@@ -2,23 +2,32 @@ TARGET = prog
 LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -lm
 CXX = gcc
 CFLAGS = -g -std=c11 -O2 -Wall -Wextra
+SRCDIR = src
+BUILDDIR = build
 
-.PHONY: default all clean
+.PHONY: default all clean directories
 
-default: $(TARGET)
+default: directories $(TARGET)
 all: default
 
-OBJECTS = $(patsubst %.c, %.o, $(shell find . -type f -name '*.c'))
-HEADERS = $(shell find . -type f -name '*.h')
+SRC := $(shell find $(SRCDIR) -type f -name '*.c')
+OBJECTS := $(patsubst $(SRCDIR)/%.c, $(BUILDDIR)/%.o, $(SRC))
+HEADERS := $(shell find $(SRCDIR) -type f -name '*.h')
+FOLDERS := $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(dir $(shell find $(SRCDIR) -type f -name '*.c')))
 
-%.o: %.cpp $(HEADERS)
+$(BUILDDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(CXX) $(CFLAGS) -c $< -o $@
 
-.PRECIOUS: $(TARGET) $(OBJECTS)
+.PRECIOUS: $(BUILDDIR)/$(TARGET) $(OBJECTS)
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(CFLAGS) $(LIBS) -o $@
 
+directories:
+	mkdir -p $(FOLDERS)
+	
+
 clean:
 	-rm -f $(OBJECTS)
 	-rm -f $(TARGET)
+	-rm -rf $(BUILDDIR)
