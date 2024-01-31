@@ -32,5 +32,8 @@ void cargo_update(game_entity *self, int time_delta, list **entities, list **vis
 
 void cargo_death(game_entity *self, list **entities, list **visual_effects)
 {
-    return;
+    addElement(entities, sizeof(game_entity), 0);
+    heart_create((game_entity*)(*entities)->val, visual_effects);
+    ((game_entity*)(*entities)->val)->x = self->x + (self->w - ((game_entity*)(*entities)->val)->w) / 2;
+    ((game_entity*)(*entities)->val)->y = self->y + (self->h - ((game_entity*)(*entities)->val)->h) / 2;
 }

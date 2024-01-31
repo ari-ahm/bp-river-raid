@@ -75,8 +75,7 @@ void __update_player_pos(int time_delta, game_input_move gim, player *p)
 
 void __update_entities_pos(int time_delta, list **entities, list **visual_effects)
 {
-    list *i = *entities;
-    for (int j = 0; i; j++)
+    for (list *i = *entities; i;)
     {
         ((game_entity *)i->val)->xspeed += ((game_entity *)i->val)->xacc * time_delta / 1000;
         ((game_entity *)i->val)->yspeed += ((game_entity *)i->val)->yacc * time_delta / 1000;
@@ -87,8 +86,9 @@ void __update_entities_pos(int time_delta, list **entities, list **visual_effect
         if (((game_entity *)i->val)->y > WINDOW_HEIGHT + 100 || ((game_entity *)i->val)->y < -200 || ((game_entity *)i->val)->x < -100 || ((game_entity *)i->val)->x > WINDOW_WIDTH)
         {
             ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
+            list *tmp = i;
             i = i->next;
-            removeElement(entities, j--);
+            removeElementPtr(entities, tmp);
             continue;
         }
         i = i->next;
@@ -148,14 +148,14 @@ void __update_bullets(int time_delta, game_input_move gim, player *p, list **bul
 
 void __update_bullets_pos(int time_delta, list **bullets)
 {
-    list *i = *bullets;
-    for (int j = 0; i; j++)
+    for (list *i = *bullets; i;)
     {
         ((bullet *)i->val)->y += ((bullet *)i->val)->yspeed * time_delta;
         if (((bullet *)i->val)->y < -get_texture_height(9) || ((bullet *)i->val)->y > WINDOW_HEIGHT)
         {
+            list *tmp = i;
             i = i->next;
-            removeElement(bullets, j--);
+            removeElementPtr(bullets, tmp);
             continue;
         }
         i = i->next;
@@ -164,12 +164,10 @@ void __update_bullets_pos(int time_delta, list **bullets)
 
 void __check_bullet_collision(list **entities, list **bullets, list **visual_effects)
 {
-    list *i = *entities;
-    for (int i_cnt = 0; i; i_cnt++)
+    for (list *i = *entities; i;)
     {
-        list *j = *bullets;
         int removed = 0;
-        for (int j_cnt = 0; j; j_cnt++)
+        for (list *j = *bullets; j;)
         {
             if (box_collision(((game_entity *)i->val)->x, ((game_entity *)i->val)->y, ((game_entity *)i->val)->w, ((game_entity *)i->val)->h, ((bullet *)j->val)->x, ((bullet *)j->val)->y, ((bullet *)j->val)->w, ((bullet *)j->val)->h))
             {
@@ -178,12 +176,13 @@ void __check_bullet_collision(list **entities, list **bullets, list **visual_eff
                 {
                     ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
                     removed = 1;
+                    list *tmp = i;
                     i = i->next;
-                    removeElement(entities, i_cnt--);
+                    removeElementPtr(entities, tmp);
                 }
-
+                list *tmp = j;
                 j = j->next;
-                removeElement(bullets, j_cnt--);
+                removeElementPtr(bullets, tmp);
                 if (removed)
                     break;
                 continue;
@@ -207,14 +206,14 @@ void __update_entities(int time_delta, list **entities, list **visual_effects, p
         ENTITIES_DEF[((game_entity *)i->val)->type].update((game_entity *)i->val, time_delta, entities, visual_effects, p);
     }
 
-    i = *entities;
-    for (int i_cnt = 0; i; i_cnt++)
+    for (list *i = *entities; i;)
     {
         if (((game_entity *)i->val)->health <= 0)
         {
             ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
+            list *tmp = i;
             i = i->next;
-            removeElement(entities, i_cnt--);
+            removeElementPtr(entities, tmp);
             continue;
         }
         i = i->next;

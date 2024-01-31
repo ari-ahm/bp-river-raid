@@ -252,15 +252,15 @@ void __draw_star(SDL_Renderer *renderer, int mode, int tiks, int x, int y)
 
 void __draw_background(SDL_Renderer *renderer, int tiks, int time_delta)
 {
-    list *i = background_stars;
-    for (int i_cnt = 0; i; i_cnt++)
+    for (list *i = background_stars; i;)
     {
         __draw_star(renderer, ((visual_effect *)i->val)->texture, ((visual_effect *)i->val)->type + tiks, ((visual_effect *)i->val)->x, ((visual_effect *)i->val)->y);
         ((visual_effect *)i->val)->y += ((visual_effect *)i->val)->yspeed * time_delta / 1000;
         if (((visual_effect *)i->val)->y > WINDOW_HEIGHT)
         {
+            list *tmp = i;
             i = i->next;
-            removeElement(&background_stars, i_cnt--);
+            removeElementPtr(&background_stars, tmp);
             continue;
         }
         i = i->next;

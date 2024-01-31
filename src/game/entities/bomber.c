@@ -47,10 +47,7 @@ void bomber_update(game_entity *self, int time_delta, list **entities, list **vi
 
 void bomber_death(game_entity *self, list **entities, list **visual_effects)
 {
-    // addElement(entities, sizeof(game_entity), 0);
-    // heart_create((game_entity*)(*entities)->val, visual_effects);
-    // ((game_entity*)(*entities)->val)->x = self->x + (self->w - ((game_entity*)(*entities)->val)->w) / 2;
-    // ((game_entity*)(*entities)->val)->y = self->y + (self->h - ((game_entity*)(*entities)->val)->h) / 2;
+    return;
 }
 
 void bomber_bullet_create(game_entity *self, list **visual_effects)
