@@ -5,46 +5,34 @@
 #include "game_draw.h"
 #include "../utils/linkedList.h"
 #include "../utils/utils.h"
-#include "entities/entities.h"
 
 const long double player_acceleration = 150;
 const long double drone_acceleration = 140;
 const long double drag_coef = 0.05;
 const long double friction = 1;
 
-const struct ENTITY_CALLBACK ENTITIES_DEF[] = {
-    {{0, 0, 0}, NULL, NULL, NULL},
-    {{150, 150, 150}, mine_create, mine_update, mine_death},
-    {{100, 100, 100}, cargo_create, cargo_update, cargo_death},
-    {{50, 50, 50}, bomber_create, bomber_update, bomber_death},
-    {{0, 0, 0}, bomber_bullet_create, bomber_bullet_update, bomber_bullet_death},
-    {{50, 50, 50}, fighter_create, fighter_update, fighter_death},
-    {{0, 0, 0}, fighter_bullet_create, fighter_bullet_update, fighter_bullet_death},
-    {{50, 50, 50}, drone_create, drone_update, drone_death},
-    {{20, 20, 20}, heart_create, heart_update, heart_death}};
-
 void __update_player_pos(int time_delta, game_input_move gim, player *p);
 void __update_entities(int time_delta, list **entities, list **visual_effects, player p);
 void __update_entities_pos(int time_delta, list **entities, list **visual_effects);
 void __spawn_entities(int time_delta, list **entities, list **visual_effects, int lvl);
-void __check_player_collision(player *p, list **entities);
+void __check_player_collision(player *p, list **entities, list *hitboxes[]);
 void __update_bullets(int time_delta, game_input_move gim, player *p, list **bullets);
 void __update_bullets_pos(int time_delta, list **bullets);
-void __check_bullet_collision(list **entities, list **bullets, list **visual_effects);
+void __check_bullet_collision(list **entities, list **bullets, list **visual_effects, list *hitboxes[]);
 
-void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets, list **visual_effects, int lvl)
+void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets, list **visual_effects, list *hitboxes[], int lvl)
 {
     __update_player_pos(time_delta, gim, p);
-    __update_bullets(time_delta, gim, p, bullets);
     __update_bullets_pos(time_delta, bullets);
+    __update_bullets(time_delta, gim, p, bullets);
     __update_entities_pos(time_delta, entities, visual_effects);
     __spawn_entities(time_delta, entities, visual_effects, lvl);
-    __check_bullet_collision(entities, bullets, visual_effects);
+    __check_bullet_collision(entities, bullets, visual_effects, hitboxes);
     __update_entities(time_delta, entities, visual_effects, *p);
     if (p->invincible - time_delta <= 0)
     {
         p->invincible = 0;
-        __check_player_collision(p, entities);
+        __check_player_collision(p, entities, hitboxes);
     }
     else
     {
@@ -97,7 +85,7 @@ void __update_entities_pos(int time_delta, list **entities, list **visual_effect
 
 void __spawn_entities(int time_delta, list **entities, list **visual_effects, int lvl)
 {
-    for (int i = 0; i < ARRAY_SIZE(ENTITIES_DEF); i++)
+    for (int i = 0; i < ENTITIES_DEF_SIZE; i++)
     {
         if (rand() % 1000000 < ENTITIES_DEF[i].prob[lvl] * time_delta)
         {
@@ -107,11 +95,11 @@ void __spawn_entities(int time_delta, list **entities, list **visual_effects, in
     }
 }
 
-void __check_player_collision(player *p, list **entities)
+void __check_player_collision(player *p, list **entities, list *hitboxes[])
 {
     for (list *i = *entities; i; i = i->next)
     {
-        if (box_collision(((game_entity *)i->val)->x, ((game_entity *)i->val)->y, ((game_entity *)i->val)->w, ((game_entity *)i->val)->h, p->x, p->y, p->w, p->h))
+        if (hitbox_collision(((game_entity *)i->val)->x, ((game_entity *)i->val)->y, hitboxes[((game_entity *)i->val)->texture], p->x, p->y, hitboxes[0]))
         {
             p->invincible = 5000;
             p->health -= ((game_entity *)i->val)->damage;
@@ -130,15 +118,16 @@ void __update_bullets(int time_delta, game_input_move gim, player *p, list **bul
     {
         addElement(bullets, sizeof(bullet), 0);
 
-        ((bullet *)(*bullets)->val)->x = p->x + get_texture_width(0) / 3 + get_texture_width(0) / 3 * p->gun_parity;
+        ((bullet *)(*bullets)->val)->x = p->x + get_texture_width(0) / (p->bullets_num + 1) + get_texture_width(0) / (p->bullets_num + 1) * p->bullet_cnt;
         ((bullet *)(*bullets)->val)->y = p->y;
         ((bullet *)(*bullets)->val)->yspeed = -0.4;
-        ((bullet *)(*bullets)->val)->damage = 1;
+        ((bullet *)(*bullets)->val)->damage = p->bullet_damage;
         ((bullet *)(*bullets)->val)->w = get_texture_width(9);
         ((bullet *)(*bullets)->val)->h = get_texture_height(9);
 
-        p->shoot_cooldown = 50 + p->shoot_cooldown - time_delta;
-        p->gun_parity = 1 - p->gun_parity;
+        p->shoot_cooldown = 100 / (p->bullets_num) + p->shoot_cooldown - time_delta;
+        p->bullet_cnt++;
+        p->bullet_cnt %= p->bullets_num;
     }
     else if (p->shoot_cooldown > 0)
     {
@@ -162,14 +151,14 @@ void __update_bullets_pos(int time_delta, list **bullets)
     }
 }
 
-void __check_bullet_collision(list **entities, list **bullets, list **visual_effects)
+void __check_bullet_collision(list **entities, list **bullets, list **visual_effects, list *hitboxes[])
 {
     for (list *i = *entities; i;)
     {
         int removed = 0;
         for (list *j = *bullets; j;)
         {
-            if (box_collision(((game_entity *)i->val)->x, ((game_entity *)i->val)->y, ((game_entity *)i->val)->w, ((game_entity *)i->val)->h, ((bullet *)j->val)->x, ((bullet *)j->val)->y, ((bullet *)j->val)->w, ((bullet *)j->val)->h))
+            if (!((game_entity *)i->val)->bullet_invisible && hitbox_collision(((game_entity *)i->val)->x, ((game_entity *)i->val)->y, hitboxes[((game_entity *)i->val)->texture], ((bullet *)j->val)->x, ((bullet *)j->val)->y, hitboxes[9]))
             {
                 ((game_entity *)i->val)->health -= ((bullet *)j->val)->damage;
                 if (((game_entity *)i->val)->health <= 0)

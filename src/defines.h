@@ -1,8 +1,8 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#define WINDOW_HEIGHT 800
-#define WINDOW_WIDTH 600
+extern int WINDOW_HEIGHT;
+extern int WINDOW_WIDTH;
 #define WINDOW_SCALE 2
 #define WINDOW_TITLE "River Raid"
 
@@ -12,6 +12,7 @@
 #define FRAME_TIME 1000 / FPS
 
 #define VERBOSE_ERR 1
+#define DEBUG_HITBOX 0
 
 #define ARRAY_SIZE(a) (int)(sizeof(a) / sizeof(a[0]))
 

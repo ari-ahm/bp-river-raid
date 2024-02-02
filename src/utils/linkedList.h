@@ -12,5 +12,6 @@ list *getElement(list *head, int i);
 void addElement(list **head, int size, int i);
 void removeElement(list **head, int i);
 void removeElementPtr(list **head, list *member);
+void sort(list **begin, list *end, int (*check)(list*, list*));
 
 #endif

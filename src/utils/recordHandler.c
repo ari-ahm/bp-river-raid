@@ -30,8 +30,9 @@ record *loadRecords()
 
     for (int i = 0; i < n; i++) {
         while (fgetc(dataptr) != '\n');
-        fscanf(dataptr, "%d %ld %d ", &(ret[i].lvl), &(ret[i].seed), &(ret[i].score));
+        int tmp = fscanf(dataptr, "%d %ld %d ", &(ret[i].lvl), &(ret[i].seed), &(ret[i].score));
         strftime(ret[i].time, sizeof(ret[i].time), "%x %X %p", localtime(&(ret[i].seed)));
+        if (tmp == EOF) break;
     }
 
     ret[n].seed = 0;
@@ -79,7 +80,7 @@ keyInputRecord readMove() {
     }
 
     keyInputRecord ret;
-    fscanf(dataptr, "%d:%d", &ret.gameTik, &ret.move);
+    if (fscanf(dataptr, "%d:%d", &ret.gameTik, &ret.move) == EOF) lineEndReached = true;
 
     if (fgetc(dataptr) == '\n') lineEndReached = true;
 

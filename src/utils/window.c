@@ -11,6 +11,8 @@ SDL_Renderer *main_renderer = NULL;
 SDL_Surface *main_surface = NULL;
 Mix_Music *main_music = NULL;
 
+int WINDOW_HEIGHT, WINDOW_WIDTH;
+
 int init_window()
 {
     if (VERBOSE_ERR)
@@ -23,12 +25,18 @@ int init_window()
 
     if (VERBOSE_ERR)
         fprintf(stderr, "[INF] initializing main window\n");
-    main_window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH * WINDOW_SCALE, WINDOW_HEIGHT * WINDOW_SCALE, 0);
+    main_window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 600 * WINDOW_SCALE, 800 * WINDOW_SCALE, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
     if (main_window == NULL)
     {
         fprintf(stderr, "[ERR] main window initialization error\n%s\n", SDL_GetError());
         return 1;
     }
+
+    SDL_GetWindowSize(main_window, &WINDOW_WIDTH, &WINDOW_HEIGHT);
+    WINDOW_WIDTH /= WINDOW_SCALE;
+    WINDOW_HEIGHT /= WINDOW_SCALE;
+    if (VERBOSE_ERR)
+        fprintf(stderr, "[INF] window dimensions : w = %d, h = %d\n", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if (VERBOSE_ERR)
         fprintf(stderr, "[INF] creating main renderer\n");
@@ -106,7 +114,7 @@ int free_window()
     return 0;
 }
 
-SDL_Texture *load_image(char *filepath, SDL_Renderer *renderer)
+SDL_Texture *load_image(const char *filepath, SDL_Renderer *renderer)
 {
     SDL_Texture *ret = NULL;
     if (VERBOSE_ERR)

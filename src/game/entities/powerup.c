@@ -5,12 +5,12 @@
 #include "../game_setup.h"
 #include <stdlib.h>
 
-void heart_setup(SDL_Renderer *renderer, list *hitboxes[])
+void powerup_setup(SDL_Renderer *renderer, list *hitboxes[])
 {
     calc_hitbox(renderer, textures[17], (SDL_Rect){0, 0, get_texture_width(17), get_texture_height(17)}, &hitboxes[17], 5, 1, -5);
 }
 
-void heart_create(game_entity *self, list **visual_effects)
+void powerup_create(game_entity *self, list **visual_effects)
 {
     self->type = 8;
     self->y = -100;
@@ -32,18 +32,18 @@ void heart_create(game_entity *self, list **visual_effects)
 }
 
 
-void heart_update(game_entity *self, int time_delta, list **entities, list **visual_effects, player p)
+void powerup_update(game_entity *self, int time_delta, list **entities, list **visual_effects, player p)
 {
     return;
 }
 
 
-void heart_death(game_entity *self, list **entities, list **visual_effects)
+void powerup_death(game_entity *self, list **entities, list **visual_effects)
 {
     return;
 }
 
-void heart_draw(game_entity *self, int tiks, list **visual_effects, player p)
+void powerup_draw(game_entity *self, int tiks, list **visual_effects, player p)
 {
     addElement(visual_effects, sizeof(visual_effect), 0);
     ((visual_effect*)(*visual_effects)->val)->priority = 700;

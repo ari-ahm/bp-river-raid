@@ -16,7 +16,7 @@ int free_window();
 SDL_Window *get_window();
 SDL_Renderer *get_renderer();
 SDL_Surface *get_surface();
-SDL_Texture *load_image(char *filepath, SDL_Renderer *renderer);
+SDL_Texture *load_image(const char *filepath, SDL_Renderer *renderer);
 int free_music();
 int is_music_playing();
 int start_music(char *filepath);

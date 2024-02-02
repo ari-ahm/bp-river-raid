@@ -25,16 +25,14 @@ const char *GAME_TEXTURES_PATH[] = {
     "assets/fighter_jet/fighter_jet.png",
     "assets/fighter_jet/shot/shot5_asset.png",
     "assets/suicide_drone.png",
-    "assets/heart.png"
-};
+    "assets/heart.png"};
 
-long double pi = 3.141592653589793238462643383279502884197;
-long double e = 2.7182818284590452353602874713526624977572;
+const int GAME_TEXTURES_PATH_SIZE = ARRAY_SIZE(GAME_TEXTURES_PATH);
 
-long double tan_vals[4];
+const long double pi = 3.141592653589793238462643383279502884197;
+const long double e = 2.7182818284590452353602874713526624977572;
 
-static SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH)];
-static SDL_Texture *effects[2];
+SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH) + 2];
 static TTF_Font *font;
 static int texture_dim[ARRAY_SIZE(GAME_TEXTURES_PATH)][2];
 
@@ -43,21 +41,16 @@ list *background_stars;
 
 int load_textures(SDL_Renderer *renderer)
 {
-    for (int i = 0; i < ARRAY_SIZE(GAME_TEXTURES_PATH); i++)
+    for (int i = 0; i < GAME_TEXTURES_PATH_SIZE; i++)
     {
         textures[i] = load_image(GAME_TEXTURES_PATH[i], renderer);
         if (textures[i] == NULL)
             return 1;
         SDL_QueryTexture(textures[i], NULL, NULL, &texture_dim[i][0], &texture_dim[i][1]);
     }
-    effects[0] = __gaussian_blur(renderer, textures[9], 32, 32, 4, 3);
-    effects[1] = __gaussian_blur(renderer, textures[15], 32, 32, 4, 3);
+    textures[GAME_TEXTURES_PATH_SIZE] = __gaussian_blur(renderer, textures[9], 32, 32, 4, 3);
+    textures[GAME_TEXTURES_PATH_SIZE + 1] = __gaussian_blur(renderer, textures[15], 32, 32, 4, 3);
     font = TTF_OpenFont("assets/Minecraft.ttf", 24);
-
-    tan_vals[0] = tan(3 * pi / 8);
-    tan_vals[1] = tan(pi / 8);
-    tan_vals[2] = tan(-pi / 8);
-    tan_vals[3] = tan(-3 * pi / 8);
 
     for (int i = 0; i < 20; i++)
     {
@@ -75,7 +68,7 @@ int load_textures(SDL_Renderer *renderer)
 
 void destroy_textures()
 {
-    for (int i = 0; i < ARRAY_SIZE(GAME_TEXTURES_PATH); i++)
+    for (int i = 0; i < ARRAY_SIZE(textures); i++)
     {
         SDL_DestroyTexture(textures[i]);
     }
@@ -92,6 +85,11 @@ int get_texture_width(int ind)
 int get_texture_height(int ind)
 {
     return texture_dim[ind][1];
+}
+
+int __visual_effect_priority_check(list *a, list *b)
+{
+    return ((visual_effect *)b->val)->priority < ((visual_effect *)a->val)->priority;
 }
 
 long double __gaussian_dist(long double sigma, long double x, long double y)
@@ -122,9 +120,34 @@ SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, in
     SDL_Color txt_px[w][h];
     SDL_Surface *srf = SDL_CreateRGBSurface(0, w, h, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
     SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_RGBA8888, srf->pixels, srf->pitch);
+    const Uint8 getPixel_bpp = srf->format->BytesPerPixel;
     for (int i = 0; i < w; i++)
         for (int j = 0; j < h; j++)
-            SDL_GetRGBA(((Uint32 *)srf->pixels)[i + j * h], srf->format, &txt_px[i][j].r, &txt_px[i][j].g, &txt_px[i][j].b, &txt_px[i][j].a);
+        {
+            Uint8 *pPixel = (Uint8 *)srf->pixels + j * srf->pitch + i * getPixel_bpp;
+            Uint32 pixelData;
+            switch (getPixel_bpp)
+            {
+            case 1:
+                pixelData = *pPixel;
+                break;
+            case 2:
+                pixelData = *(Uint16 *)pPixel;
+                break;
+            case 3:
+                if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+                    pixelData = pPixel[0] << 16 | pPixel[1] << 8 | pPixel[2];
+                else
+                    pixelData = pPixel[0] | pPixel[1] << 8 | pPixel[2] << 16;
+                break;
+            case 4:
+                pixelData = *(Uint32 *)pPixel;
+                break;
+            default:
+                pixelData = 0;
+            }
+            SDL_GetRGBA(pixelData, srf->format, &txt_px[i][j].r, &txt_px[i][j].g, &txt_px[i][j].b, &txt_px[i][j].a);
+        }
     SDL_FreeSurface(srf);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
@@ -278,77 +301,8 @@ void __draw_background(SDL_Renderer *renderer, int tiks, int time_delta)
     }
 }
 
-void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim, player p, list *entities, list *bullets)
+void __draw_player(SDL_Renderer *renderer, game_input_move gim, player p, int tiks)
 {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-
-    __draw_background(renderer, tiks, time_delta);
-
-    for (list *i = bullets; i; i = i->next)
-    {
-        __draw_anim(renderer, effects[0], (int)((bullet *)i->val)->x - (32 - get_texture_width(9)) / 2, (int)((bullet *)i->val)->y - (32 - get_texture_height(9)) / 2, 0, 1);
-        __draw_anim(renderer, textures[9], (int)((bullet *)i->val)->x, (int)((bullet *)i->val)->y, 0, 1);
-    }
-
-    for (list *i = entities; i; i = i->next)
-    {
-        switch (((game_entity *)i->val)->type)
-        {
-        case 1:
-            __draw_anim(renderer, textures[3 + ((game_entity *)i->val)->texture], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-            break;
-        case 2:
-            __draw_anim(renderer, textures[7], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-            break;
-        case 3:
-            __draw_anim(renderer, textures[13], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, ((tiks + ((game_entity *)i->val)->rnd) / 200) % 8, 8);
-            __draw_anim(renderer, textures[10], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-            break;
-        case 4:
-            __draw_anim(renderer, textures[11], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, ((tiks + ((game_entity *)i->val)->rnd) / 200) % 8, 8);
-            break;
-        case 5:
-            __draw_anim(renderer, textures[14], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-            break;
-        case 6:
-            __draw_anim(renderer, effects[1], (int)((game_entity *)i->val)->x - (32 - get_texture_width(15)) / 2, (int)((game_entity *)i->val)->y - (32 - get_texture_height(15)) / 2, 0, 1);
-            __draw_anim(renderer, textures[15], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-            break;
-        case 7:
-            int dir;
-            long double dx = p.x - ((game_entity *)i->val)->x;
-            long double dy = p.y - ((game_entity *)i->val)->y;
-            if (dx == 0)
-            {
-                if (dy < 0)
-                    dir = 0;
-                else
-                    dir = 4;
-            }
-            else
-            {
-                long double nsb = -dy / dx;
-                for (dir = 0; nsb < tan_vals[dir] && nsb < 3; dir++)
-                    ;
-                if (dx < 0)
-                    dir += 4;
-                dir %= 8;
-            }
-            __draw_anim2d(renderer, textures[16], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, ((tiks + ((game_entity *)i->val)->rnd) / 200) % 6, dir, 6, 8);
-            break;
-        case 8:
-            __draw_anim(renderer, textures[17], (int)((game_entity *)i->val)->x, (int)((game_entity *)i->val)->y, 0, 1);
-            break;
-        }
-
-        if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health && ((game_entity *)i->val)->type != 4 && ((game_entity *)i->val)->type != 6 && ((game_entity *)i->val)->type != 8)
-        {
-            int w = ((game_entity *)i->val)->max_health;
-            __draw_health(renderer, ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - w) / 2, ((game_entity *)i->val)->y - 10, w, 4, (long double)max(0, ((game_entity *)i->val)->health) / ((game_entity *)i->val)->max_health, (SDL_Color){0, 255, 0, 255}, (SDL_Color){255, 0, 0, 255});
-        }
-    }
-
     if (p.invincible && (p.invincible / 500) % 2)
     {
         if (gim.u)
@@ -380,6 +334,41 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
         __draw_anim(renderer, textures[0], (int)p.x, (int)p.y, 0, 1);
         __draw_anim(renderer, textures[8], (int)p.x, (int)p.y, 0, 1);
     }
+}
+
+void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim, player p, list *entities, list *bullets, list **visual_effects, list *hitboxes[])
+{
+    list *entities_draw_list = NULL;
+    for (list *i = entities; i; i = i->next)
+        ENTITIES_DEF[((game_entity *)i->val)->type].draw((game_entity *)i->val, tiks, &entities_draw_list, p);
+    sort(&entities_draw_list, NULL, __visual_effect_priority_check);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    __draw_background(renderer, tiks, time_delta);
+
+    for (list *i = entities_draw_list; i; i = i->next)
+    {
+        __draw_anim2d(renderer, textures[((visual_effect *)i->val)->texture], ((visual_effect *)i->val)->x, ((visual_effect *)i->val)->y, ((visual_effect *)i->val)->texture_i, ((visual_effect *)i->val)->texture_j, ((visual_effect *)i->val)->texture_w, ((visual_effect *)i->val)->texture_h);
+    }
+
+    for (list *i = entities; i; i = i->next)
+    {
+        if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health && ((game_entity *)i->val)->type != 4 && ((game_entity *)i->val)->type != 6 && ((game_entity *)i->val)->type != 8)
+        {
+            int w = ((game_entity *)i->val)->max_health;
+            __draw_health(renderer, ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - w) / 2, ((game_entity *)i->val)->y - 10, w, 4, (long double)max(0, ((game_entity *)i->val)->health) / ((game_entity *)i->val)->max_health, (SDL_Color){0, 255, 0, 255}, (SDL_Color){255, 0, 0, 255});
+        }
+    }
+
+    for (list *i = bullets; i; i = i->next)
+    {
+        __draw_anim(renderer, textures[GAME_TEXTURES_PATH_SIZE], (int)((bullet *)i->val)->x - (32 - get_texture_width(9)) / 2, (int)((bullet *)i->val)->y - (32 - get_texture_height(9)) / 2, 0, 1);
+        __draw_anim(renderer, textures[9], (int)((bullet *)i->val)->x, (int)((bullet *)i->val)->y, 0, 1);
+    }
+
+    __draw_player(renderer, gim, p, tiks);
 
     __draw_health(
         renderer, p.x + (p.w - 100) / 2,
@@ -388,5 +377,26 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
         (SDL_Color){0, 128, 255, 255},
         (SDL_Color){0x02, 0x3b, 0x59, 255});
 
+    if (DEBUG_HITBOX)
+    {
+        for (list *i = entities_draw_list; i; i = i->next)
+        {
+            if (((visual_effect *)i->val)->texture >= GAME_TEXTURES_PATH_SIZE)
+                continue;
+            for (list *j = hitboxes[((visual_effect *)i->val)->texture]; j; j = j->next)
+            {
+                SDL_SetRenderDrawColor(renderer, 0, 255, 0, 127);
+                SDL_RenderFillRect(renderer, &(SDL_Rect){
+                                                 (((visual_effect *)i->val)->x + ((SDL_Rect *)j->val)->x) * WINDOW_SCALE,
+                                                 (((visual_effect *)i->val)->y + ((SDL_Rect *)j->val)->y) * WINDOW_SCALE,
+                                                 ((SDL_Rect *)j->val)->w * WINDOW_SCALE,
+                                                 ((SDL_Rect *)j->val)->h * WINDOW_SCALE});
+            }
+        }
+    }
+
     SDL_RenderPresent(renderer);
+
+    while (entities_draw_list)
+        removeElement(&entities_draw_list, 0);
 }
