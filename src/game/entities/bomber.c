@@ -28,6 +28,7 @@ void bomber_create(game_entity *self, list **visual_effects)
     self->attack_cooldown = 1000;
     self->damage = 10;
     self->health = 100;
+    self->score = 500;
     self->max_health = 100;
     self->rnd = rand() % 1000000;
     self->w = get_texture_width(10);
@@ -50,7 +51,7 @@ void bomber_update(game_entity *self, int time_delta, list **entities, list **vi
     }
 }
 
-void bomber_death(game_entity *self, list **entities, list **visual_effects)
+void bomber_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     return;
 }
@@ -106,7 +107,7 @@ void bomber_bullet_update(game_entity *self, int time_delta, list **entities, li
     return;
 }
 
-void bomber_bullet_death(game_entity *self, list **entities, list **visual_effects)
+void bomber_bullet_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     return;
 }

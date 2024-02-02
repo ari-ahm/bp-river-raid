@@ -20,6 +20,7 @@ void cargo_create(game_entity *self, list **visual_effects)
     self->yspeed = 40 + rand() % 20;
     self->xacc = 0;
     self->yacc = 0;
+    self->score = 1000;
     self->bullet_invisible = 0;
     self->texture = 7;
     self->attack_cooldown = 1000;
@@ -38,7 +39,7 @@ void cargo_update(game_entity *self, int time_delta, list **entities, list **vis
 }
 
 
-void cargo_death(game_entity *self, list **entities, list **visual_effects)
+void cargo_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     addElement(entities, sizeof(game_entity), 0);
     heart_create((game_entity*)(*entities)->val, visual_effects);

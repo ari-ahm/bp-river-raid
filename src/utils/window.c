@@ -233,6 +233,21 @@ void render_text_by_center(SDL_Renderer *renderer, TTF_Font *font, int x, int y,
     SDL_DestroyTexture(message);
 }
 
+void render_text_by_top_left(SDL_Renderer *renderer, TTF_Font *font, int x, int y, char *str, SDL_Color color)
+{
+    SDL_Surface *surface_message = TTF_RenderText_Solid(font, str, color);
+    SDL_Texture *message = SDL_CreateTextureFromSurface(renderer, surface_message);
+
+    int text_width, text_height;
+    SDL_QueryTexture(message, NULL, NULL, &text_width, &text_height);
+
+    SDL_Rect textpos_rect = {x * WINDOW_SCALE, y * WINDOW_SCALE, text_width * WINDOW_SCALE, text_height * WINDOW_SCALE};
+    SDL_RenderCopy(renderer, message, NULL, &textpos_rect);
+
+    SDL_FreeSurface(surface_message);
+    SDL_DestroyTexture(message);
+}
+
 int button_hover(button bt, int x, int y)
 {
     return (x / WINDOW_SCALE >= bt.x && x / WINDOW_SCALE <= bt.x + bt.w && y / WINDOW_SCALE >= bt.y && y / WINDOW_SCALE <= bt.y + bt.h);

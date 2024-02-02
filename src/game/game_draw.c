@@ -25,7 +25,8 @@ const char *GAME_TEXTURES_PATH[] = {
     "assets/fighter_jet/fighter_jet.png",
     "assets/fighter_jet/shot/shot5_asset.png",
     "assets/suicide_drone.png",
-    "assets/heart.png"};
+    "assets/heart.png",
+    "assets/powerup.png"};
 
 const int GAME_TEXTURES_PATH_SIZE = ARRAY_SIZE(GAME_TEXTURES_PATH);
 
@@ -33,7 +34,7 @@ const long double pi = 3.141592653589793238462643383279502884197;
 const long double e = 2.7182818284590452353602874713526624977572;
 
 SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH) + 2];
-static TTF_Font *font;
+static TTF_Font *fonts[1];
 static int texture_dim[ARRAY_SIZE(GAME_TEXTURES_PATH)][2];
 
 SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, int h, long double sigma, long double mul);
@@ -50,7 +51,7 @@ int load_textures(SDL_Renderer *renderer)
     }
     textures[GAME_TEXTURES_PATH_SIZE] = __gaussian_blur(renderer, textures[9], 32, 32, 4, 3);
     textures[GAME_TEXTURES_PATH_SIZE + 1] = __gaussian_blur(renderer, textures[15], 32, 32, 4, 3);
-    font = TTF_OpenFont("assets/Minecraft.ttf", 24);
+    fonts[0] = TTF_OpenFont("assets/Minecraft.ttf", 24);
 
     for (int i = 0; i < 20; i++)
     {
@@ -72,7 +73,8 @@ void destroy_textures()
     {
         SDL_DestroyTexture(textures[i]);
     }
-    TTF_CloseFont(font);
+    for (int i = 0; i < ARRAY_SIZE(fonts); i++)
+        TTF_CloseFont(fonts[i]);
     while (background_stars)
         removeElement(&background_stars, 0);
 }
@@ -336,6 +338,14 @@ void __draw_player(SDL_Renderer *renderer, game_input_move gim, player p, int ti
     }
 }
 
+void __draw_score(SDL_Renderer *renderer, int score)
+{
+    char buf[30];
+    sprintf(buf, "Score : %d", score);
+
+    render_text_by_top_left(renderer, fonts[0], 30, 30, buf, (SDL_Color){255, 255, 255, 255});
+}
+
 void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim, player p, list *entities, list *bullets, list **visual_effects, list *hitboxes[])
 {
     list *entities_draw_list = NULL;
@@ -355,7 +365,7 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
 
     for (list *i = entities; i; i = i->next)
     {
-        if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health && ((game_entity *)i->val)->type != 4 && ((game_entity *)i->val)->type != 6 && ((game_entity *)i->val)->type != 8)
+        if (((game_entity *)i->val)->health != ((game_entity *)i->val)->max_health && ((game_entity *)i->val)->type != 4 && ((game_entity *)i->val)->type != 6 && ((game_entity *)i->val)->type != 8 && ((game_entity *)i->val)->type != 9)
         {
             int w = ((game_entity *)i->val)->max_health;
             __draw_health(renderer, ((game_entity *)i->val)->x + (((game_entity *)i->val)->w - w) / 2, ((game_entity *)i->val)->y - 10, w, 4, (long double)max(0, ((game_entity *)i->val)->health) / ((game_entity *)i->val)->max_health, (SDL_Color){0, 255, 0, 255}, (SDL_Color){255, 0, 0, 255});
@@ -394,6 +404,8 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
             }
         }
     }
+
+    __draw_score(renderer, (int)p.score);
 
     SDL_RenderPresent(renderer);
 

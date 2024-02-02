@@ -22,10 +22,11 @@ void heart_create(game_entity *self, list **visual_effects)
     self->cnt = 0;
     self->bullet_invisible = 1;
     self->texture = 17;
+    self->score = 500;
     self->attack_cooldown = 0;
     self->damage = -20;
-    self->health = 200000;
-    self->max_health = 200000;
+    self->health = 1;
+    self->max_health = 1;
     self->rnd = rand() % 1000000;
     self->w = get_texture_width(17);
     self->h = get_texture_height(17);
@@ -38,7 +39,7 @@ void heart_update(game_entity *self, int time_delta, list **entities, list **vis
 }
 
 
-void heart_death(game_entity *self, list **entities, list **visual_effects)
+void heart_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     return;
 }

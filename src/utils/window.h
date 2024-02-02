@@ -22,6 +22,7 @@ int is_music_playing();
 int start_music(char *filepath);
 void render_button(button bt, SDL_Renderer *renderer, TTF_Font *button_font, SDL_Color fg_color, SDL_Color bg_color, SDL_Color rim_color);
 void render_text_by_center(SDL_Renderer *renderer, TTF_Font *font, int x, int y, char *str, SDL_Color color);
+void render_text_by_top_left(SDL_Renderer *renderer, TTF_Font *font, int x, int y, char *str, SDL_Color color);
 int button_hover(button bt, int x, int y);
 
 #endif

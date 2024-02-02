@@ -29,7 +29,8 @@ const struct ENTITY_CALLBACK ENTITIES_DEF[] = {
     {{50, 50, 50}, fighter_setup, fighter_create, fighter_update, fighter_death, fighter_draw},
     {{0, 0, 0}, fighter_bullet_setup, fighter_bullet_create, fighter_bullet_update, fighter_bullet_death, fighter_bullet_draw},
     {{50, 50, 50}, drone_setup, drone_create, drone_update, drone_death, drone_draw},
-    {{20, 20, 20}, heart_setup, heart_create, heart_update, heart_death, heart_draw}};
+    {{20, 20, 20}, heart_setup, heart_create, heart_update, heart_death, heart_draw},
+    {{20, 20, 20}, powerup_setup, powerup_create, powerup_update, powerup_death, powerup_draw}};
 
 const int ENTITIES_DEF_SIZE = ARRAY_SIZE(ENTITIES_DEF);
 
@@ -64,7 +65,7 @@ int run_game(SDL_Renderer *renderer, int lvl)
     tan_vals[3] = tan(-3 * pi / 8);
 
     game_input_move gim = {0, 0, 0, 0, 0};
-    player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0, get_texture_width(0), get_texture_height(0), 100, 0, 0, 0, 1, 1};
+    player p = {(WINDOW_WIDTH - get_texture_width(0)) / 2, WINDOW_HEIGHT * 5 / 6, 0, 0, get_texture_width(0), get_texture_height(0), 100, 0, 0, 0, 1, 1, 0};
     list *entities = NULL;
     list *bullets = NULL;
     list *visual_effects = NULL;

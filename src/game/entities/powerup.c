@@ -7,28 +7,29 @@
 
 void powerup_setup(SDL_Renderer *renderer, list *hitboxes[])
 {
-    calc_hitbox(renderer, textures[17], (SDL_Rect){0, 0, get_texture_width(17), get_texture_height(17)}, &hitboxes[17], 5, 1, -5);
+    calc_hitbox(renderer, textures[18], (SDL_Rect){0, 0, get_texture_width(18), get_texture_height(18)}, &hitboxes[18], 5, 1, -5);
 }
 
 void powerup_create(game_entity *self, list **visual_effects)
 {
-    self->type = 8;
+    self->type = 9;
     self->y = -100;
-    self->x = rand() % (WINDOW_WIDTH - get_texture_width(17));
+    self->x = rand() % (WINDOW_WIDTH - get_texture_width(18));
     self->xspeed = 0;
     self->yspeed = 20;
     self->xacc = 0;
     self->yacc = 0;
     self->cnt = 0;
     self->bullet_invisible = 1;
-    self->texture = 17;
+    self->score = 1000;
+    self->texture = 18;
     self->attack_cooldown = 0;
-    self->damage = -20;
-    self->health = 200000;
-    self->max_health = 200000;
+    self->damage = -100;
+    self->health = 1;
+    self->max_health = 1;
     self->rnd = rand() % 1000000;
-    self->w = get_texture_width(17);
-    self->h = get_texture_height(17);
+    self->w = get_texture_width(18);
+    self->h = get_texture_height(18);
 }
 
 
@@ -38,16 +39,22 @@ void powerup_update(game_entity *self, int time_delta, list **entities, list **v
 }
 
 
-void powerup_death(game_entity *self, list **entities, list **visual_effects)
+void powerup_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
-    return;
+    p->bullets_num++;
+    if (p->bullets_num > 5)
+    {
+        p->bullets_num = 1;
+        p->bullet_cnt = 0;
+        p->bullet_damage *= 6;
+    }
 }
 
 void powerup_draw(game_entity *self, int tiks, list **visual_effects, player p)
 {
     addElement(visual_effects, sizeof(visual_effect), 0);
-    ((visual_effect*)(*visual_effects)->val)->priority = 700;
-    ((visual_effect*)(*visual_effects)->val)->texture = 17;
+    ((visual_effect*)(*visual_effects)->val)->priority = 800;
+    ((visual_effect*)(*visual_effects)->val)->texture = 18;
     ((visual_effect*)(*visual_effects)->val)->x = self->x;
     ((visual_effect*)(*visual_effects)->val)->y = self->y;
     ((visual_effect*)(*visual_effects)->val)->texture_w = 1;

@@ -23,6 +23,7 @@ void fighter_create(game_entity *self, list **visual_effects)
     self->yacc = 0;
     self->cnt = 0;
     self->bullet_invisible = 0;
+    self->score = 300;
     self->texture = 14;
     self->attack_cooldown = 1000;
     self->damage = 50;
@@ -52,7 +53,7 @@ void fighter_update(game_entity *self, int time_delta, list **entities, list **v
 }
 
 
-void fighter_death(game_entity *self, list **entities, list **visual_effects)
+void fighter_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     return;
 }
@@ -85,6 +86,7 @@ void fighter_bullet_create(game_entity *self, list **visual_effects)
     self->cnt = 0;
     self->texture = 15;
     self->attack_cooldown = 0;
+    self->score = 0;
     self->damage = 10;
     self->bullet_invisible = 0;
     self->health = 1;
@@ -102,7 +104,7 @@ void fighter_bullet_update(game_entity *self, int time_delta, list **entities, l
 }
 
 
-void fighter_bullet_death(game_entity *self, list **entities, list **visual_effects)
+void fighter_bullet_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     return;
 }

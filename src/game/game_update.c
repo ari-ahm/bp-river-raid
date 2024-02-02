@@ -12,23 +12,23 @@ const long double drag_coef = 0.05;
 const long double friction = 1;
 
 void __update_player_pos(int time_delta, game_input_move gim, player *p);
-void __update_entities(int time_delta, list **entities, list **visual_effects, player p);
-void __update_entities_pos(int time_delta, list **entities, list **visual_effects);
+void __update_entities(int time_delta, list **entities, list **visual_effects, player *p);
+void __update_entities_pos(int time_delta, list **entities, list **visual_effects, player *p);
 void __spawn_entities(int time_delta, list **entities, list **visual_effects, int lvl);
 void __check_player_collision(player *p, list **entities, list *hitboxes[]);
 void __update_bullets(int time_delta, game_input_move gim, player *p, list **bullets);
 void __update_bullets_pos(int time_delta, list **bullets);
-void __check_bullet_collision(list **entities, list **bullets, list **visual_effects, list *hitboxes[]);
+void __check_bullet_collision(list **entities, list **bullets, list **visual_effects, list *hitboxes[], player *p);
 
 void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets, list **visual_effects, list *hitboxes[], int lvl)
 {
     __update_player_pos(time_delta, gim, p);
     __update_bullets_pos(time_delta, bullets);
     __update_bullets(time_delta, gim, p, bullets);
-    __update_entities_pos(time_delta, entities, visual_effects);
+    __update_entities_pos(time_delta, entities, visual_effects, p);
     __spawn_entities(time_delta, entities, visual_effects, lvl);
-    __check_bullet_collision(entities, bullets, visual_effects, hitboxes);
-    __update_entities(time_delta, entities, visual_effects, *p);
+    __check_bullet_collision(entities, bullets, visual_effects, hitboxes, p);
+    __update_entities(time_delta, entities, visual_effects, p);
     if (p->invincible - time_delta <= 0)
     {
         p->invincible = 0;
@@ -38,6 +38,7 @@ void update(int time_delta, game_input_move gim, player *p, list **entities, lis
     {
         p->invincible -= time_delta;
     }
+    p->score += (long double)time_delta / 1000;
 }
 
 void __update_player_pos(int time_delta, game_input_move gim, player *p)
@@ -61,7 +62,7 @@ void __update_player_pos(int time_delta, game_input_move gim, player *p)
     p->y += (p->yspeed * time_delta / 1000);
 }
 
-void __update_entities_pos(int time_delta, list **entities, list **visual_effects)
+void __update_entities_pos(int time_delta, list **entities, list **visual_effects, player *p)
 {
     for (list *i = *entities; i;)
     {
@@ -73,7 +74,7 @@ void __update_entities_pos(int time_delta, list **entities, list **visual_effect
 
         if (((game_entity *)i->val)->y > WINDOW_HEIGHT + 100 || ((game_entity *)i->val)->y < -200 || ((game_entity *)i->val)->x < -100 || ((game_entity *)i->val)->x > WINDOW_WIDTH)
         {
-            ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
+            ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects, p);
             list *tmp = i;
             i = i->next;
             removeElementPtr(entities, tmp);
@@ -103,10 +104,9 @@ void __check_player_collision(player *p, list **entities, list *hitboxes[])
         {
             p->invincible = 5000;
             p->health -= ((game_entity *)i->val)->damage;
+            p->score += 50;
             p->health = min(100, p->health);
             ((game_entity *)i->val)->health -= 20;
-            if (((game_entity *)i->val)->type == 8)
-                ((game_entity *)i->val)->health = -1;
             break;
         }
     }
@@ -151,7 +151,7 @@ void __update_bullets_pos(int time_delta, list **bullets)
     }
 }
 
-void __check_bullet_collision(list **entities, list **bullets, list **visual_effects, list *hitboxes[])
+void __check_bullet_collision(list **entities, list **bullets, list **visual_effects, list *hitboxes[], player *p)
 {
     for (list *i = *entities; i;)
     {
@@ -163,7 +163,8 @@ void __check_bullet_collision(list **entities, list **bullets, list **visual_eff
                 ((game_entity *)i->val)->health -= ((bullet *)j->val)->damage;
                 if (((game_entity *)i->val)->health <= 0)
                 {
-                    ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
+                    ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects, p);
+                    p->score += ((game_entity *)i->val)->score;
                     removed = 1;
                     list *tmp = i;
                     i = i->next;
@@ -187,19 +188,19 @@ void __check_bullet_collision(list **entities, list **bullets, list **visual_eff
     }
 }
 
-void __update_entities(int time_delta, list **entities, list **visual_effects, player p)
+void __update_entities(int time_delta, list **entities, list **visual_effects, player *p)
 {
     list *i = *entities;
     for (; i; i = i->next)
     {
-        ENTITIES_DEF[((game_entity *)i->val)->type].update((game_entity *)i->val, time_delta, entities, visual_effects, p);
+        ENTITIES_DEF[((game_entity *)i->val)->type].update((game_entity *)i->val, time_delta, entities, visual_effects, *p);
     }
 
     for (list *i = *entities; i;)
     {
         if (((game_entity *)i->val)->health <= 0)
         {
-            ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects);
+            ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects, p);
             list *tmp = i;
             i = i->next;
             removeElementPtr(entities, tmp);

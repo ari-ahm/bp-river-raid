@@ -27,6 +27,7 @@ typedef struct
     int bullet_cnt;
     int bullets_num;
     int bullet_damage;
+    long double score;
 } player;
 
 typedef struct
@@ -47,6 +48,7 @@ typedef struct
     int attack_cooldown;
     int cnt;
     int bullet_invisible;
+    int score;
 } game_entity;
 
 typedef struct
@@ -80,7 +82,7 @@ struct ENTITY_CALLBACK
     void (*setup)(SDL_Renderer *, list *[]);
     void (*create)(game_entity *, list **);
     void (*update)(game_entity *, int, list **, list **, player);
-    void (*death)(game_entity *, list **, list **);
+    void (*death)(game_entity *, list **, list **, player *);
     void (*draw)(game_entity *, int, list **, player);
 };
 

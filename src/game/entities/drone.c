@@ -19,6 +19,7 @@ void drone_create(game_entity *self, list **visual_effects)
     self->yspeed = 20;
     self->xacc = 0;
     self->yacc = 0;
+    self->score = 200;
     self->cnt = 0;
     self->texture = 16;
     self->attack_cooldown = 0;
@@ -50,7 +51,7 @@ void drone_update(game_entity *self, int time_delta, list **entities, list **vis
         self->yacc += (self->y < 0 ? 1 : -1) * 300;
 }
 
-void drone_death(game_entity *self, list **entities, list **visual_effects)
+void drone_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     return;
 }

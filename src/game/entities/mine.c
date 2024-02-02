@@ -26,6 +26,7 @@ void mine_create(game_entity *self, list **visual_effects)
     self->x = rand() % (WINDOW_WIDTH - get_texture_width(self->texture));
     self->attack_cooldown = 1000;
     self->damage = 5;
+    self->score = 100;
     self->bullet_invisible = 0;
     self->health = 50;
     self->max_health = 50;
@@ -41,7 +42,7 @@ void mine_update(game_entity *self, int time_delta, list **entities, list **visu
 }
 
 
-void mine_death(game_entity *self, list **entities, list **visual_effects)
+void mine_death(game_entity *self, list **entities, list **visual_effects, player *p)
 {
     return;
 }
