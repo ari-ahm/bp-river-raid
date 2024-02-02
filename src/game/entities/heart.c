@@ -47,7 +47,7 @@ void heart_death(game_entity *self, list **entities, list **visual_effects, play
 void heart_draw(game_entity *self, int tiks, list **visual_effects, player p)
 {
     addElement(visual_effects, sizeof(visual_effect), 0);
-    ((visual_effect*)(*visual_effects)->val)->priority = 700;
+    ((visual_effect*)(*visual_effects)->val)->priority = 50;
     ((visual_effect*)(*visual_effects)->val)->texture = 17;
     ((visual_effect*)(*visual_effects)->val)->x = self->x;
     ((visual_effect*)(*visual_effects)->val)->y = self->y;

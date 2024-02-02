@@ -53,7 +53,7 @@ void powerup_death(game_entity *self, list **entities, list **visual_effects, pl
 void powerup_draw(game_entity *self, int tiks, list **visual_effects, player p)
 {
     addElement(visual_effects, sizeof(visual_effect), 0);
-    ((visual_effect*)(*visual_effects)->val)->priority = 800;
+    ((visual_effect*)(*visual_effects)->val)->priority = 60;
     ((visual_effect*)(*visual_effects)->val)->texture = 18;
     ((visual_effect*)(*visual_effects)->val)->x = self->x;
     ((visual_effect*)(*visual_effects)->val)->y = self->y;

@@ -22,14 +22,15 @@ void __check_bullet_collision(list **entities, list **bullets, list **visual_eff
 
 void update(int time_delta, game_input_move gim, player *p, list **entities, list **bullets, list **visual_effects, list *hitboxes[], int lvl)
 {
-    __update_player_pos(time_delta, gim, p);
+    if (p->health > 0)
+        __update_player_pos(time_delta, gim, p);
     __update_bullets_pos(time_delta, bullets);
     __update_bullets(time_delta, gim, p, bullets);
     __update_entities_pos(time_delta, entities, visual_effects, p);
     __spawn_entities(time_delta, entities, visual_effects, lvl);
     __check_bullet_collision(entities, bullets, visual_effects, hitboxes, p);
     __update_entities(time_delta, entities, visual_effects, p);
-    if (p->invincible - time_delta <= 0)
+    if (p->invincible - time_delta <= 0 && p->health > 0)
     {
         p->invincible = 0;
         __check_player_collision(p, entities, hitboxes);
@@ -38,7 +39,8 @@ void update(int time_delta, game_input_move gim, player *p, list **entities, lis
     {
         p->invincible -= time_delta;
     }
-    p->score += (long double)time_delta / 1000;
+    if (p->health > 0)
+        p->score += (long double)time_delta / 1000;
 }
 
 void __update_player_pos(int time_delta, game_input_move gim, player *p)
@@ -74,7 +76,6 @@ void __update_entities_pos(int time_delta, list **entities, list **visual_effect
 
         if (((game_entity *)i->val)->y > WINDOW_HEIGHT + 100 || ((game_entity *)i->val)->y < -200 || ((game_entity *)i->val)->x < -100 || ((game_entity *)i->val)->x > WINDOW_WIDTH)
         {
-            ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects, p);
             list *tmp = i;
             i = i->next;
             removeElementPtr(entities, tmp);
@@ -201,6 +202,7 @@ void __update_entities(int time_delta, list **entities, list **visual_effects, p
         if (((game_entity *)i->val)->health <= 0)
         {
             ENTITIES_DEF[((game_entity *)i->val)->type].death((game_entity *)i->val, entities, visual_effects, p);
+            p->score += ((game_entity *)i->val)->score;
             list *tmp = i;
             i = i->next;
             removeElementPtr(entities, tmp);

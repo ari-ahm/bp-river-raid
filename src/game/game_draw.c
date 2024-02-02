@@ -26,7 +26,8 @@ const char *GAME_TEXTURES_PATH[] = {
     "assets/fighter_jet/shot/shot5_asset.png",
     "assets/suicide_drone.png",
     "assets/heart.png",
-    "assets/powerup.png"};
+    "assets/powerup.png",
+    "assets/gameover.png"};
 
 const int GAME_TEXTURES_PATH_SIZE = ARRAY_SIZE(GAME_TEXTURES_PATH);
 
@@ -36,6 +37,7 @@ const long double e = 2.7182818284590452353602874713526624977572;
 SDL_Texture *textures[ARRAY_SIZE(GAME_TEXTURES_PATH) + 2];
 static TTF_Font *fonts[1];
 static int texture_dim[ARRAY_SIZE(GAME_TEXTURES_PATH)][2];
+static int death_time;
 
 SDL_Texture *__gaussian_blur(SDL_Renderer *renderer, SDL_Texture *txt, int w, int h, long double sigma, long double mul);
 list *background_stars;
@@ -63,6 +65,8 @@ int load_textures(SDL_Renderer *renderer)
         ((visual_effect *)background_stars->val)->yspeed = 10;
         ((visual_effect *)background_stars->val)->texture = rand() % 3;
     }
+
+    death_time = 0;
 
     return 0;
 }
@@ -336,6 +340,13 @@ void __draw_player(SDL_Renderer *renderer, game_input_move gim, player p, int ti
         __draw_anim(renderer, textures[0], (int)p.x, (int)p.y, 0, 1);
         __draw_anim(renderer, textures[8], (int)p.x, (int)p.y, 0, 1);
     }
+
+    __draw_health(
+        renderer, p.x + (p.w - 100) / 2,
+        p.y + get_texture_height(0) + 10, 100, 4,
+        (long double)p.health / 100,
+        (SDL_Color){0, 128, 255, 255},
+        (SDL_Color){0x02, 0x3b, 0x59, 255});
 }
 
 void __draw_score(SDL_Renderer *renderer, int score)
@@ -344,6 +355,25 @@ void __draw_score(SDL_Renderer *renderer, int score)
     sprintf(buf, "Score : %d", score);
 
     render_text_by_top_left(renderer, fonts[0], 30, 30, buf, (SDL_Color){255, 255, 255, 255});
+}
+
+void __show_gameover(SDL_Renderer *renderer, int pastime)
+{
+    const int show_dur = 3000;
+
+    SDL_Rect rct = {
+        (WINDOW_WIDTH - get_texture_width(19)) / 2 * WINDOW_SCALE,
+        ((WINDOW_HEIGHT - get_texture_height(19)) / 2 - 100) * WINDOW_SCALE,
+        get_texture_width(19) * WINDOW_SCALE,
+        get_texture_height(19) * WINDOW_SCALE};
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 169 * min(pastime, show_dur) / show_dur);
+    SDL_RenderFillRect(renderer, &(SDL_Rect){0, 0, WINDOW_WIDTH * WINDOW_SCALE, WINDOW_HEIGHT * WINDOW_SCALE});
+
+    SDL_SetTextureAlphaMod(textures[19], 255 * min(pastime, show_dur) / show_dur);
+    SDL_RenderCopy(renderer, textures[19], NULL, &rct);
+
+    render_text_by_center(renderer, fonts[0], WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100, "-click anywhere to return to main menu-", (SDL_Color){255, 255, 255, 255 * min(pastime, show_dur) / show_dur});
 }
 
 void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim, player p, list *entities, list *bullets, list **visual_effects, list *hitboxes[])
@@ -378,14 +408,8 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
         __draw_anim(renderer, textures[9], (int)((bullet *)i->val)->x, (int)((bullet *)i->val)->y, 0, 1);
     }
 
-    __draw_player(renderer, gim, p, tiks);
-
-    __draw_health(
-        renderer, p.x + (p.w - 100) / 2,
-        p.y + get_texture_height(0) + 10, 100, 4,
-        (long double)p.health / 100,
-        (SDL_Color){0, 128, 255, 255},
-        (SDL_Color){0x02, 0x3b, 0x59, 255});
+    if (p.health > 0)
+        __draw_player(renderer, gim, p, tiks);
 
     if (DEBUG_HITBOX)
     {
@@ -406,6 +430,13 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
     }
 
     __draw_score(renderer, (int)p.score);
+
+    if (p.health <= 0)
+    {
+        if (!death_time)
+            death_time = tiks;
+        __show_gameover(renderer, tiks - death_time);
+    }
 
     SDL_RenderPresent(renderer);
 

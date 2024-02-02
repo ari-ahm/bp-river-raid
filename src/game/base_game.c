@@ -22,15 +22,15 @@ deploy textures using enum
 
 const struct ENTITY_CALLBACK ENTITIES_DEF[] = {
     {{0, 0, 0}, NULL, NULL, NULL, NULL, NULL},
-    {{150, 150, 150}, mine_setup, mine_create, mine_update, mine_death, mine_draw},
-    {{100, 100, 100}, cargo_setup, cargo_create, cargo_update, cargo_death, cargo_draw},
-    {{50, 50, 50}, bomber_setup, bomber_create, bomber_update, bomber_death, bomber_draw},
+    {{150, 300, 400}, mine_setup, mine_create, mine_update, mine_death, mine_draw},
+    {{100, 200, 300}, cargo_setup, cargo_create, cargo_update, cargo_death, cargo_draw},
+    {{50, 150, 250}, bomber_setup, bomber_create, bomber_update, bomber_death, bomber_draw},
     {{0, 0, 0}, bomber_bullet_setup, bomber_bullet_create, bomber_bullet_update, bomber_bullet_death, bomber_bullet_draw},
-    {{50, 50, 50}, fighter_setup, fighter_create, fighter_update, fighter_death, fighter_draw},
+    {{50, 150, 250}, fighter_setup, fighter_create, fighter_update, fighter_death, fighter_draw},
     {{0, 0, 0}, fighter_bullet_setup, fighter_bullet_create, fighter_bullet_update, fighter_bullet_death, fighter_bullet_draw},
-    {{50, 50, 50}, drone_setup, drone_create, drone_update, drone_death, drone_draw},
-    {{20, 20, 20}, heart_setup, heart_create, heart_update, heart_death, heart_draw},
-    {{20, 20, 20}, powerup_setup, powerup_create, powerup_update, powerup_death, powerup_draw}};
+    {{50, 150, 350}, drone_setup, drone_create, drone_update, drone_death, drone_draw},
+    {{20, 15, 10}, heart_setup, heart_create, heart_update, heart_death, heart_draw},
+    {{20, 15, 10}, powerup_setup, powerup_create, powerup_update, powerup_death, powerup_draw}};
 
 const int ENTITIES_DEF_SIZE = ARRAY_SIZE(ENTITIES_DEF);
 
@@ -81,7 +81,7 @@ int run_game(SDL_Renderer *renderer, int lvl)
         SDL_Event ev;
         while (SDL_PollEvent(&ev))
         {
-            if (ev.type == SDL_QUIT || (ev.type == SDL_KEYUP && ev.key.keysym.sym == SDLK_ESCAPE))
+            if (ev.type == SDL_QUIT || (ev.type == SDL_KEYUP && ev.key.keysym.sym == SDLK_ESCAPE) || (ev.type == SDL_MOUSEBUTTONUP && p.health <= 0))
             {
                 destroy_textures();
                 while (entities)
@@ -117,6 +117,6 @@ int run_game(SDL_Renderer *renderer, int lvl)
 
         update(time_delta, gim, &p, &entities, &bullets, &visual_effects, hitboxes, lvl);
 
-        draw(renderer, SDL_GetTicks(), time_delta, gim, p, entities, bullets, &visual_effects, hitboxes);
+        draw(renderer, current_frame, time_delta, gim, p, entities, bullets, &visual_effects, hitboxes);
     }
 }

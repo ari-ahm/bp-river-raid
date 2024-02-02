@@ -43,7 +43,7 @@ void fighter_update(game_entity *self, int time_delta, list **entities, list **v
         self->cnt = 1 - self->cnt;
         addElement(entities, sizeof(game_entity), 0);
         fighter_bullet_create((game_entity*)(*entities)->val, visual_effects);
-        ((game_entity*)(*entities)->val)->y = self->y + self->h;
+        ((game_entity*)(*entities)->val)->y = self->y;
         ((game_entity*)(*entities)->val)->x = self->x + (self->w - get_texture_width(15)) / 2;
     }
     else
@@ -61,7 +61,7 @@ void fighter_death(game_entity *self, list **entities, list **visual_effects, pl
 void fighter_draw(game_entity *self, int tiks, list **visual_effects, player p)
 {
     addElement(visual_effects, sizeof(visual_effect), 0);
-    ((visual_effect*)(*visual_effects)->val)->priority = 500;
+    ((visual_effect*)(*visual_effects)->val)->priority = 1500;
     ((visual_effect*)(*visual_effects)->val)->texture = 14;
     ((visual_effect*)(*visual_effects)->val)->x = self->x;
     ((visual_effect*)(*visual_effects)->val)->y = self->y;
