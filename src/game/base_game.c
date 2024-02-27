@@ -93,7 +93,7 @@ int run_game(SDL_Renderer *renderer, int lvl)
                 for (int i = 0; i < GAME_TEXTURES_PATH_SIZE; i++)
                     while (hitboxes[i])
                         removeElement(&hitboxes[i], 0);
-                return 0;
+                return p.score;
             }
             else if (ev.type == SDL_KEYDOWN)
             {

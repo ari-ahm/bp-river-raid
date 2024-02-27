@@ -1,88 +1,57 @@
-#include <string.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "linkedList.h"
 #include "recordHandler.h"
 #include "../defines.h"
+#include <time.h>
+#include <stdio.h>
+#include <string.h>
 
-FILE *dataptr;
-bool lineEndReached;
-
-record *loadRecords()
+list *loadRecords()
 {
-    dataptr = fopen(GAME_SAVE, "r");
-    if (dataptr == NULL)
-        return NULL;
-
-    int n = 0;
-    while (!feof(dataptr))
-        if (fgetc(dataptr) == '\n')
-            n++;
-    n /= 2;
-
-    record *ret = malloc(sizeof(record) * (n + 1));
-    if (ret == NULL) {
-        fclose(dataptr);
-        return NULL;
+    list *ret = NULL;
+    if (VERBOSE_ERR)
+        fprintf(stderr, "[INF] opening record file %s\n", GAME_SAVE);
+    FILE *fp = fopen(GAME_SAVE, "r");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "[ERR] couldn't open record file\n");
     }
 
-    fseek(dataptr, 0, SEEK_SET);
+    record tmp;
+    int fpRet;
+    do
+    {
+        if (feof(fp))
+            break;
+        char *tmp2;
+        tmp2 = fgets(tmp.name, 32, fp);
+        tmp.name[strlen(tmp.name) - 1] = '\0';
+        tmp2 = fgets(tmp.time, 32, fp);
+        tmp.time[strlen(tmp.time) - 1] = '\0';
+        fpRet = fscanf(fp, " %d %d %d ", &tmp.score, &tmp.dur, &tmp.lvl);
+        addElement(&ret, sizeof(record), 0);
+        *((record *)ret->val) = tmp;
 
-    for (int i = 0; i < n; i++) {
-        while (fgetc(dataptr) != '\n');
-        int tmp = fscanf(dataptr, "%d %ld %d ", &(ret[i].lvl), &(ret[i].seed), &(ret[i].score));
-        strftime(ret[i].time, sizeof(ret[i].time), "%x %X %p", localtime(&(ret[i].seed)));
-        if (tmp == EOF) break;
-    }
+    } while (fpRet != EOF);
 
-    ret[n].seed = 0;
-    ret[n].score = -1;
-    strcpy(ret[n].time, "1900, Y2K babyyyy"); // little "easter egg" of mine :)
-
-    fclose(dataptr);
+    fclose(fp);
 
     return ret;
 }
 
-void freeRecords(record *rc)
+void writeRecord(char *name, time_t time, int score, int dur, int lvl)
 {
-    free(rc);
-}
-
-void openInputRecord(int index) {
-    dataptr = fopen(GAME_SAVE, "r");
-    for (int i = 0; i < index; i++) {
-        while (fgetc(dataptr) != '\n');
-        while (fgetc(dataptr) != '\n');
-    }
-    lineEndReached = false;
-}
-
-void closeIORecord() {
-    fclose(dataptr);
-}
-
-void openOutputRecord() {
-    dataptr = fopen(GAME_SAVE, "a");
-}
-
-void writeMove(int gameTik, int move) {
-    fprintf(dataptr, "%d:%d ", gameTik, move);
-}
-
-void writeStats(int lvl, time_t seed, int score) {
-    fprintf(dataptr, "\n%d %ld %d\n", lvl, seed, score);
-}
-
-keyInputRecord readMove() {
-    if (lineEndReached) {
-        return (keyInputRecord){.gameTik=-1, .move=-1};
+    if (VERBOSE_ERR)
+        fprintf(stderr, "[INF] opening record file %s\n", GAME_SAVE);
+    FILE *fp = fopen(GAME_SAVE, "a");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "[ERR] couldn't open record file\n");
     }
 
-    keyInputRecord ret;
-    if (fscanf(dataptr, "%d:%d", &ret.gameTik, &ret.move) == EOF) lineEndReached = true;
+    char time_buf[32];
+    strftime(time_buf, 32, "%c", localtime(&time));
 
-    if (fgetc(dataptr) == '\n') lineEndReached = true;
+    fprintf(fp, "%s\n%s\n%d\n%d\n%d\n\n", name, time_buf, score, dur, lvl);
 
-    return ret;
+    fclose(fp);
 }

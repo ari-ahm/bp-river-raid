@@ -11,11 +11,13 @@ extern int WINDOW_WIDTH;
 #define FPS 30
 #define FRAME_TIME 1000 / FPS
 
-#define VERBOSE_ERR 1
+#define VERBOSE_ERR 0
 #define DEBUG_HITBOX 0
 
 #define ARRAY_SIZE(a) (int)(sizeof(a) / sizeof(a[0]))
 
 #define BUTTON_RIM_WIDTH 5
+
+#define FULLSCREEN 0
 
 #endif

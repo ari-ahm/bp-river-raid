@@ -2,25 +2,17 @@
 #define RECORDHANDLER
 
 #include <time.h>
+#include "linkedList.h"
 
 typedef struct {
+    char name[32];
     char time[32];
     int score;
-    time_t seed;
+    int dur;
     int lvl;
 } record;
 
-typedef struct {
-    int gameTik, move;
-} keyInputRecord;
-
-record *loadRecords();
-void freeRecords(record *rc);
-void openInputRecord(int index);
-void closeIORecord();
-void openOutputRecord();
-void writeMove(int gameTik, int move);
-void writeStats(int lvl, time_t seed, int score);
-keyInputRecord readMove();
+list *loadRecords();
+void writeRecord(char *name, time_t time, int score, int dur, int lvl);
 
 #endif

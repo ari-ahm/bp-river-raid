@@ -25,7 +25,7 @@ int init_window()
 
     if (VERBOSE_ERR)
         fprintf(stderr, "[INF] initializing main window\n");
-    main_window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 600 * WINDOW_SCALE, 800 * WINDOW_SCALE, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
+    main_window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 600 * WINDOW_SCALE, 800 * WINDOW_SCALE, FULLSCREEN ? SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
     if (main_window == NULL)
     {
         fprintf(stderr, "[ERR] main window initialization error\n%s\n", SDL_GetError());

@@ -48,6 +48,7 @@ void powerup_death(game_entity *self, list **entities, list **visual_effects, pl
         p->bullet_cnt = 0;
         p->bullet_damage *= 6;
     }
+    p->shoot_cooldown = 0;
 }
 
 void powerup_draw(game_entity *self, int tiks, list **visual_effects, player p)

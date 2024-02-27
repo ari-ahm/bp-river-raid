@@ -281,6 +281,9 @@ void __draw_star(SDL_Renderer *renderer, int mode, int tiks, int x, int y)
 
 void __draw_background(SDL_Renderer *renderer, int tiks, int time_delta)
 {
+    SDL_SetRenderDrawColor(renderer, 0, 15, 35, 255);
+    SDL_RenderClear(renderer);
+
     for (list *i = background_stars; i;)
     {
         __draw_star(renderer, ((visual_effect *)i->val)->texture, ((visual_effect *)i->val)->type + tiks, ((visual_effect *)i->val)->x, ((visual_effect *)i->val)->y);
@@ -367,6 +370,13 @@ void __show_gameover(SDL_Renderer *renderer, int pastime)
         get_texture_width(19) * WINDOW_SCALE,
         get_texture_height(19) * WINDOW_SCALE};
 
+    if (get_texture_width(19) > WINDOW_WIDTH)
+        rct = (SDL_Rect){
+            0,
+            ((WINDOW_HEIGHT - get_texture_height(19) * WINDOW_WIDTH / get_texture_width(19)) / 2 - 100) * WINDOW_SCALE,
+            WINDOW_WIDTH * WINDOW_SCALE,
+            get_texture_height(19) * WINDOW_WIDTH / get_texture_width(19) * WINDOW_SCALE};
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 169 * min(pastime, show_dur) / show_dur);
     SDL_RenderFillRect(renderer, &(SDL_Rect){0, 0, WINDOW_WIDTH * WINDOW_SCALE, WINDOW_HEIGHT * WINDOW_SCALE});
 
@@ -382,9 +392,6 @@ void draw(SDL_Renderer *renderer, int tiks, int time_delta, game_input_move gim,
     for (list *i = entities; i; i = i->next)
         ENTITIES_DEF[((game_entity *)i->val)->type].draw((game_entity *)i->val, tiks, &entities_draw_list, p);
     sort(&entities_draw_list, NULL, __visual_effect_priority_check);
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
 
     __draw_background(renderer, tiks, time_delta);
 

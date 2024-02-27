@@ -1,6 +1,7 @@
 #include "utils/window.h"
 #include "scenes/scenes.h"
 #include "game/base_game.h"
+#include "utils/recordHandler.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -16,6 +17,7 @@ int main()
 
     int lvl = 0;
     int is_looping = 1;
+    int ret;
     while (is_looping)
     {
         if (!is_music_playing())
@@ -24,16 +26,27 @@ int main()
         switch (mode)
         {
         case 0:
+            char name[32] = "NO_NAME";
+            ret = getname(get_renderer(), name);
+            if (ret == -1)
+            {
+                is_looping = 0;
+                break;
+            }
             free_music();
-            // openOutputRecord();
-            // time_t tm = time(NULL);
-            // srand(tm);
+            time_t starting_time = time(NULL);
             int score = run_game(get_renderer(), lvl);
-            // writeStats(lvl, tm, score, "bobby_marins");
-            // closeIORecord();
+            time_t ending_time = time(NULL);
+            if (score < 0)
+            {
+                score = -score;
+                is_looping = 0;
+            }
+
+            writeRecord(name, starting_time, score, ending_time - starting_time, lvl);
             break;
         case 1:
-            int ret = show_level_selector(get_renderer());
+            ret = show_level_selector(get_renderer());
             if (ret == -2)
             {
                 is_looping = 0;
@@ -46,12 +59,6 @@ int main()
             if (runRecord == -1)
             {
                 is_looping = 0;
-            }
-            else if (runRecord)
-            {
-                free_music();
-                // run_game(record_input, runRecord - 1);
-                // closeIORecord();
             }
             break;
         case 3:

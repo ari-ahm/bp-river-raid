@@ -1,7 +1,7 @@
 TARGET = prog
 LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -lm
 CXX = gcc
-CFLAGS = -g -std=c11 -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable
+CFLAGS = -g -std=c11 -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
 SRCDIR = src
 BUILDDIR = build
 
